@@ -1,16 +1,15 @@
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+const { MercadoPagoConfig, Preference } = require('mercadopago');
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
 });
 
-export default async function handler(req, res) {
-  // Só aceita POST
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { items, payer } = req.body;
+  const { items } = req.body;
 
   if (!items || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'Itens inválidos' });
@@ -18,7 +17,6 @@ export default async function handler(req, res) {
 
   try {
     const preference = new Preference(client);
-
     const result = await preference.create({
       body: {
         items: items.map(item => ({
@@ -27,30 +25,24 @@ export default async function handler(req, res) {
           quantity: item.qty,
           unit_price: item.price,
           currency_id: 'BRL',
-          picture_url: undefined, // fotos são base64, não servem para a API do MP
         })),
-        payer: payer || {},
-        payment_methods: {
-          installments: 3, // máximo de parcelas
-        },
+        payment_methods: { installments: 3 },
         back_urls: {
-          success: process.env.SITE_URL + '/sucesso',
-          failure: process.env.SITE_URL + '/falha',
-          pending: process.env.SITE_URL + '/pendente',
+          success: process.env.SITE_URL,
+          failure: process.env.SITE_URL,
+          pending: process.env.SITE_URL,
         },
         auto_return: 'approved',
-        statement_descriptor: 'Lê Closet',
-        external_reference: `pedido-${Date.now()}`,
+        statement_descriptor: 'Le Closet',
       },
     });
 
     return res.status(200).json({
-      id: result.id,
-      init_point: result.init_point,       // URL de checkout (produção)
-      sandbox_init_point: result.sandbox_init_point, // URL de checkout (teste)
+      init_point: result.init_point,
+      sandbox_init_point: result.sandbox_init_point,
     });
   } catch (error) {
     console.error('Erro MP:', error);
-    return res.status(500).json({ error: 'Erro ao criar preferência de pagamento' });
+    return res.status(500).json({ error: 'Erro ao criar preferência' });
   }
-}
+};
