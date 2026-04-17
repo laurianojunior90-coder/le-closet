@@ -27,12 +27,6 @@ module.exports = async function handler(req, res) {
           currency_id: 'BRL',
         })),
         payment_methods: { installments: 3 },
-        back_urls: {
-          success: process.env.SITE_URL,
-          failure: process.env.SITE_URL,
-          pending: process.env.SITE_URL,
-        },
-        auto_return: 'approved',
         statement_descriptor: 'Le Closet',
       },
     });
