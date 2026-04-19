@@ -1270,6 +1270,44 @@ footer {
 .admin-pass-wrap input { padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; font-family: var(--font); font-size: 0.9rem; outline: none; text-align: center; letter-spacing: 0.2em; }
 .admin-pass-wrap input:focus { border-color: var(--charcoal); }
 .admin-hint { font-size: 0.72rem; color: var(--muted); text-align: center; }
+/* ADMIN TABS */
+.admin-tabs { display:flex; gap:6px; background:var(--cream); border-radius:12px; padding:4px; }
+.admin-tab { flex:1; padding:8px; border:none; background:none; border-radius:9px; font-family:var(--font); font-size:.78rem; font-weight:600; color:var(--muted); cursor:pointer; transition:all .2s; }
+.admin-tab.active { background:#fff; color:var(--charcoal); box-shadow:0 1px 4px rgba(0,0,0,.08); }
+/* ADMIN FORM */
+.apf { display:flex; flex-direction:column; gap:14px; overflow-y:auto; flex:1; padding-right:4px; }
+.apf label { font-family:var(--font); font-size:.72rem; font-weight:600; color:var(--charcoal); letter-spacing:.06em; text-transform:uppercase; display:block; margin-bottom:4px; }
+.apf input[type=text],.apf input[type=number],.apf textarea,.apf select { width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:10px; font-family:var(--font); font-size:.88rem; color:var(--charcoal); outline:none; box-sizing:border-box; background:#fff; transition:border-color .2s; }
+.apf input:focus,.apf textarea:focus,.apf select:focus { border-color:var(--charcoal); }
+.apf textarea { resize:vertical; min-height:70px; }
+.apf-row { display:flex; gap:10px; }
+.apf-row > * { flex:1; }
+.apf-checks { display:flex; flex-wrap:wrap; gap:8px; margin-top:2px; }
+.apf-check { display:flex; align-items:center; gap:5px; font-family:var(--font); font-size:.8rem; color:var(--charcoal); cursor:pointer; padding:6px 10px; border:1.5px solid var(--border); border-radius:8px; transition:all .15s; user-select:none; }
+.apf-check.sel { border-color:var(--charcoal); background:var(--charcoal); color:#fff; }
+.apf-photos { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+.apf-photo-add { width:70px; height:90px; border:2px dashed var(--border); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--muted); cursor:pointer; transition:border-color .2s; flex-shrink:0; }
+.apf-photo-add:hover { border-color:var(--charcoal); }
+.apf-photo-item { width:70px; height:90px; border-radius:10px; overflow:hidden; position:relative; flex-shrink:0; background:var(--cream); }
+.apf-photo-item img { width:100%; height:100%; object-fit:cover; }
+.apf-photo-item .apf-photo-del { position:absolute; top:3px; right:3px; width:18px; height:18px; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; border:none; font-size:.6rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.apf-colors-list { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+.apf-color-item { display:flex; align-items:center; gap:6px; background:var(--cream); padding:6px 10px; border-radius:8px; font-size:.78rem; }
+.apf-color-swatch { width:18px; height:18px; border-radius:50%; border:1.5px solid rgba(0,0,0,.12); flex-shrink:0; }
+.apf-color-del { background:none; border:none; cursor:pointer; color:var(--muted); font-size:.7rem; padding:0 0 0 4px; }
+.apf-add-color { display:flex; gap:8px; align-items:center; margin-top:6px; }
+.apf-add-color input[type=color] { width:36px; height:36px; border:none; border-radius:8px; padding:2px; cursor:pointer; background:none; }
+.apf-add-color input[type=text] { flex:1; }
+.apf-status { font-family:var(--font); font-size:.82rem; padding:10px 14px; border-radius:10px; text-align:center; display:none; }
+.apf-status.ok { background:#d1fae5; color:#065f46; display:block; }
+.apf-status.err { background:#fee2e2; color:#991b1b; display:block; }
+.apf-status.loading { background:#e0f2fe; color:#075985; display:block; }
+.acfg { display:flex; flex-direction:column; gap:14px; }
+.acfg label { font-family:var(--font); font-size:.72rem; font-weight:600; color:var(--charcoal); letter-spacing:.06em; text-transform:uppercase; display:block; margin-bottom:4px; }
+.acfg input { width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:10px; font-family:var(--font); font-size:.85rem; outline:none; box-sizing:border-box; transition:border-color .2s; }
+.acfg input:focus { border-color:var(--charcoal); }
+.acfg-hint { font-size:.72rem; color:var(--muted); line-height:1.5; }
+
 
 /* ---- PRODUCT DETAIL PAGE ---- */
 .pd-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
@@ -1696,7 +1734,7 @@ const PRODS = [
    cat:'cropped',tag:'Novo',icon:'✨',
    colors:['#6b3a2a','#6d1535','#111111','#f0f0f0'],cnames:['Marrom','Vinho','Preto','Branco'],
    sizes:['Único'],sec:'dest'},
-];
+]; // ##PRODS_END##
 
 let cart=[], selColor={}, selSize={};
 const fmt=v=>`R$ ${v.toFixed(2).replace('.',',')}`;
@@ -1779,8 +1817,7 @@ function closeAdmin(){ document.getElementById('adminOverlay').classList.remove(
 function checkAdminPass(){
   if(document.getElementById('adminPassInput').value === ADMIN_PASS){
     document.getElementById('adminPassScreen').style.display='none';
-    const screen = document.getElementById('adminStockScreen');
-    screen.style.display='flex';
+    document.getElementById('adminMainScreen').style.display='flex';
     buildAdminList();
   } else {
     document.getElementById('adminPassErr').style.display='block';
@@ -2283,6 +2320,229 @@ function renderOpts(opts) {
   });
 }
 
+// ── ADMIN TABS ─────────────────────────────────────────────────────────────────
+function switchAdminTab(tab){
+  document.getElementById('adminStockScreen').style.display = tab==='stock' ? 'flex' : 'none';
+  document.getElementById('adminProdScreen').style.display  = tab==='prod'  ? 'flex' : 'none';
+  document.getElementById('adminCfgScreen').style.display   = tab==='cfg'   ? 'flex' : 'none';
+  ['stock','prod','cfg'].forEach(t=>{
+    const btn = document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(btn) btn.classList.toggle('active', t===tab);
+  });
+  if(tab==='stock') buildAdminList();
+  if(tab==='cfg'){
+    const tok = localStorage.getItem('lecloset_gh_token')||'';
+    document.getElementById('cfgToken').value = tok;
+  }
+}
+
+function cfgSave(){
+  const tok = document.getElementById('cfgToken').value.trim();
+  if(!tok){ apfSetStatus('cfgStatus','err','Token não pode estar vazio.'); return; }
+  localStorage.setItem('lecloset_gh_token', tok);
+  apfSetStatus('cfgStatus','ok','Token salvo com sucesso!');
+}
+
+// ── NOVO PRODUTO ───────────────────────────────────────────────────────────────
+let apfPhotosData = [];
+let apfColorsData = [];
+
+function toggleCheck(el){ el.classList.toggle('sel'); }
+
+function apfAddPhotos(input){
+  const files = Array.from(input.files);
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      apfPhotosData.push(e.target.result);
+      apfRenderPhotos();
+      loaded++;
+      if(loaded===files.length) input.value='';
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function apfRenderPhotos(){
+  const container = document.getElementById('apfPhotos');
+  const items = apfPhotosData.map((src,i)=>`
+    <div class="apf-photo-item">
+      <img src="${src}" alt="foto ${i+1}"/>
+      <button class="apf-photo-del" onclick="apfDelPhoto(${i})">✕</button>
+    </div>`).join('');
+  container.innerHTML = items + `<div class="apf-photo-add" onclick="document.getElementById('apfPhotoInput').click()">＋</div>`;
+}
+
+function apfDelPhoto(i){ apfPhotosData.splice(i,1); apfRenderPhotos(); }
+
+function apfAddColor(){
+  const hex  = document.getElementById('apfColorPicker').value;
+  const name = document.getElementById('apfColorName').value.trim() || hex;
+  apfColorsData.push({hex, name});
+  apfRenderColors();
+  document.getElementById('apfColorName').value='';
+}
+
+function apfRenderColors(){
+  document.getElementById('apfColorsList').innerHTML = apfColorsData.map((c,i)=>`
+    <div class="apf-color-item">
+      <div class="apf-color-swatch" style="background:${c.hex}"></div>
+      <span>${c.name}</span>
+      <button class="apf-color-del" onclick="apfDelColor(${i})">✕</button>
+    </div>`).join('');
+}
+
+function apfDelColor(i){ apfColorsData.splice(i,1); apfRenderColors(); }
+
+function apfSetStatus(id, type, msg){
+  const el = document.getElementById(id);
+  el.className = 'apf-status ' + type;
+  el.textContent = msg;
+}
+
+function apfBuildProduct(){
+  const name  = document.getElementById('apfName').value.trim();
+  const price = parseFloat(document.getElementById('apfPrice').value);
+  const oldP  = parseFloat(document.getElementById('apfOld').value)||null;
+  const cat   = document.getElementById('apfCat').value;
+  const tag   = document.getElementById('apfTag').value;
+  const desc  = document.getElementById('apfDesc').value.trim();
+
+  const secs = [];
+  if(document.getElementById('chkLanc').classList.contains('sel')) secs.push('lanc');
+  if(document.getElementById('chkDest').classList.contains('sel')) secs.push('dest');
+
+  const VALID_SIZES = ['P','M','G','GG','Único'];
+  const sizes = Array.from(document.querySelectorAll('#apfSizes .apf-check.sel')).map(el=>el.textContent.trim());
+
+  const errors = [];
+  if(!name)          errors.push('Nome obrigatório');
+  if(isNaN(price))   errors.push('Preço obrigatório');
+  if(!cat)           errors.push('Categoria obrigatória');
+  if(!sizes.length)  errors.push('Selecione ao menos um tamanho');
+  if(!apfPhotosData.length) errors.push('Adicione ao menos uma foto');
+  if(errors.length)  return {error: errors.join(' · ')};
+
+  const newId = Math.max(...PRODS.map(p=>p.id), 100) + Math.floor(Math.random()*900)+100;
+  const icons = {blusas:'👚',cropped:'👕',vestidos:'👗',conjuntos:'🩱',calcas:'👖',saias:'🩴',bodies:'🩱',macaquinhos:'🦋'};
+
+  const base = {
+    id: newId, name,
+    img: apfPhotosData[0],
+    gallery: apfPhotosData.slice(1),
+    cat, icon: icons[cat]||'👗', price, sizes,
+  };
+  if(oldP)  base.old  = oldP;
+  if(tag)   base.tag  = tag;
+  if(desc)  base.desc = desc;
+  if(apfColorsData.length){
+    base.colors = apfColorsData.map(c=>c.hex);
+    base.cnames = apfColorsData.map(c=>c.name);
+  }
+
+  const prods = [];
+  if(secs.includes('lanc')) prods.push(Object.assign({}, base, {id:newId,   sec:'lanc'}));
+  if(secs.includes('dest')) prods.push(Object.assign({}, base, {id:newId+1, sec:'dest'}));
+  if(!prods.length)         prods.push(Object.assign({}, base, {sec:'lanc'}));
+
+  return {prods};
+}
+
+function jsonifyProd(p){
+  const esc = s => String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  let s = `  {id:${p.id},name:'${esc(p.name)}',`;
+  s += `img:'${p.img}',`;
+  if(p.gallery && p.gallery.length) s += `gallery:[${p.gallery.map(x=>`'${x}'`).join(',')}],`;
+  s += `cat:'${p.cat}',`;
+  if(p.tag)  s += `tag:'${esc(p.tag)}',`;
+  s += `icon:'${p.icon}',price:${p.price},`;
+  if(p.old)  s += `old:${p.old},`;
+  if(p.colors && p.colors.length){
+    s += `colors:[${p.colors.map(c=>`'${c}'`).join(',')}],`;
+    s += `cnames:[${p.cnames.map(c=>`'${esc(c)}'`).join(',')}],`;
+  }
+  s += `sizes:[${p.sizes.map(sz=>`'${sz}'`).join(',')}],`;
+  if(p.desc) s += `desc:'${esc(p.desc)}',`;
+  if(p.sec)  s += `sec:'${p.sec}'`;
+  s += '}';
+  return s;
+}
+
+async function apfPublish(){
+  const result = apfBuildProduct();
+  if(result.error){ apfSetStatus('apfStatus','err',result.error); return; }
+
+  const token = localStorage.getItem('lecloset_gh_token')||'';
+  if(!token){
+    apfSetStatus('apfStatus','err','Token GitHub não configurado. Vá em ⚙ Config.');
+    return;
+  }
+
+  apfSetStatus('apfStatus','loading','Publicando... aguarde');
+
+  const owner='laurianojunior90-coder', repo='le-closet', path='index.html', branch='main';
+  const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+  try {
+    const metaRes = await fetch(`${apiBase}?ref=${branch}`, {
+      headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' }
+    });
+    if(!metaRes.ok) throw new Error('Erro ao buscar arquivo: ' + metaRes.status);
+    const meta = await metaRes.json();
+
+    const currentHtml = new TextDecoder().decode(
+      Uint8Array.from(atob(meta.content.replace(/\n/g,'')), c=>c.charCodeAt(0))
+    );
+
+    const marker = ']; // ##PRODS_END##';
+    if(!currentHtml.includes(marker)) throw new Error('Marcador não encontrado no arquivo remoto.');
+
+    const newProdsJs = result.prods.map(jsonifyProd).join(',\n') + ',';
+    const updated = currentHtml.replace(marker, newProdsJs + '\n' + marker);
+
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(updated);
+    let binary = '';
+    bytes.forEach(b => binary += String.fromCharCode(b));
+    const encoded = btoa(binary);
+
+    const commitRes = await fetch(apiBase, {
+      method:'PUT',
+      headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json', 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        message: `Produto adicionado: ${result.prods[0].name}`,
+        content: encoded,
+        sha: meta.sha,
+        branch,
+      })
+    });
+
+    if(!commitRes.ok){
+      const err = await commitRes.json();
+      throw new Error(err.message || 'Erro ao commitar: ' + commitRes.status);
+    }
+
+    apfSetStatus('apfStatus','ok','✓ Publicado! O site atualiza em ~1 minuto.');
+    result.prods.forEach(p=>{ PRODS.push(p); selColor[p.id]=0; selSize[p.id]=p.sizes[0]; });
+    render();
+    apfResetForm();
+
+  } catch(e) {
+    apfSetStatus('apfStatus','err','Erro: ' + e.message);
+  }
+}
+
+function apfResetForm(){
+  ['apfName','apfPrice','apfOld','apfDesc'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const cat=document.getElementById('apfCat'); if(cat) cat.value='';
+  const tag=document.getElementById('apfTag'); if(tag) tag.value='';
+  document.querySelectorAll('#apfForm .apf-check.sel').forEach(el=>el.classList.remove('sel'));
+  apfPhotosData=[]; apfColorsData=[];
+  apfRenderPhotos(); apfRenderColors();
+  document.getElementById('apfStatus').className='apf-status';
+}
+
 </script>
 
 <!-- CHATBOT -->
@@ -2291,7 +2551,7 @@ function renderOpts(opts) {
   <div class="admin-box">
     <div id="adminPassScreen">
       <div class="admin-title">Área da Lojista</div>
-      <div class="admin-subtitle">Digite a senha para acessar o painel de estoque</div>
+      <div class="admin-subtitle">Digite a senha para acessar o painel</div>
       <div class="admin-pass-wrap" style="margin-top:16px;">
         <input type="password" id="adminPassInput" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkAdminPass()"/>
         <button class="admin-save" onclick="checkAdminPass()">Entrar</button>
@@ -2299,15 +2559,123 @@ function renderOpts(opts) {
       </div>
       <button class="admin-close" style="margin-top:8px;width:100%;" onclick="closeAdmin()">Cancelar</button>
     </div>
-    <div id="adminStockScreen" style="display:none;flex-direction:column;gap:20px;height:100%;">
-      <div>
-        <div class="admin-title">Gerenciar Estoque</div>
-        <div class="admin-subtitle">Atualize as quantidades disponíveis de cada peça</div>
+    <div id="adminMainScreen" style="display:none;flex-direction:column;gap:16px;height:100%;">
+      <div class="admin-tabs">
+        <button class="admin-tab active" id="tabStock" onclick="switchAdminTab('stock')">📦 Estoque</button>
+        <button class="admin-tab" id="tabProd" onclick="switchAdminTab('prod')">＋ Produto</button>
+        <button class="admin-tab" id="tabCfg" onclick="switchAdminTab('cfg')">⚙ Config</button>
       </div>
-      <div class="admin-list" id="adminList"></div>
-      <div class="admin-footer">
-        <button class="admin-save" onclick="saveStock()">✓ Salvar Estoque</button>
-        <button class="admin-close" onclick="closeAdmin()">Fechar</button>
+
+      <!-- ESTOQUE -->
+      <div id="adminStockScreen" style="display:flex;flex-direction:column;gap:16px;flex:1;min-height:0;">
+        <div class="admin-subtitle">Atualize as quantidades disponíveis de cada peça</div>
+        <div class="admin-list" id="adminList"></div>
+        <div class="admin-footer">
+          <button class="admin-save" onclick="saveStock()">✓ Salvar Estoque</button>
+          <button class="admin-close" onclick="closeAdmin()">Fechar</button>
+        </div>
+      </div>
+
+      <!-- NOVO PRODUTO -->
+      <div id="adminProdScreen" style="display:none;flex-direction:column;gap:14px;flex:1;min-height:0;">
+        <div class="apf" id="apfForm">
+          <div>
+            <label>Nome do produto *</label>
+            <input type="text" id="apfName" placeholder="Ex: Blusa Poliamida Decote V"/>
+          </div>
+          <div class="apf-row">
+            <div>
+              <label>Preço (R$) *</label>
+              <input type="number" id="apfPrice" placeholder="44" min="0" step="0.01"/>
+            </div>
+            <div>
+              <label>Preço antigo (R$)</label>
+              <input type="number" id="apfOld" placeholder="59 (opcional)" min="0" step="0.01"/>
+            </div>
+          </div>
+          <div class="apf-row">
+            <div>
+              <label>Categoria *</label>
+              <select id="apfCat">
+                <option value="">Selecionar...</option>
+                <option value="blusas">Blusas</option>
+                <option value="cropped">Cropped</option>
+                <option value="vestidos">Vestidos</option>
+                <option value="conjuntos">Conjuntos</option>
+                <option value="calcas">Calças</option>
+                <option value="saias">Saias</option>
+                <option value="bodies">Bodies</option>
+                <option value="macaquinhos">Macaquinhos</option>
+              </select>
+            </div>
+            <div>
+              <label>Tag</label>
+              <select id="apfTag">
+                <option value="">Nenhuma</option>
+                <option value="Novo">Novo</option>
+                <option value="Promoção">Promoção</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label>Publicar em</label>
+            <div class="apf-checks">
+              <span class="apf-check" id="chkLanc" onclick="toggleCheck(this)">Lançamentos</span>
+              <span class="apf-check" id="chkDest" onclick="toggleCheck(this)">Destaques</span>
+            </div>
+          </div>
+          <div>
+            <label>Tamanhos *</label>
+            <div class="apf-checks" id="apfSizes">
+              <span class="apf-check" onclick="toggleCheck(this)">P</span>
+              <span class="apf-check" onclick="toggleCheck(this)">M</span>
+              <span class="apf-check" onclick="toggleCheck(this)">G</span>
+              <span class="apf-check" onclick="toggleCheck(this)">GG</span>
+              <span class="apf-check" onclick="toggleCheck(this)">Único</span>
+            </div>
+          </div>
+          <div>
+            <label>Fotos (1ª = capa, demais = galeria)</label>
+            <div class="apf-photos" id="apfPhotos">
+              <div class="apf-photo-add" onclick="document.getElementById('apfPhotoInput').click()">＋</div>
+            </div>
+            <input type="file" id="apfPhotoInput" accept="image/*" multiple style="display:none" onchange="apfAddPhotos(this)"/>
+          </div>
+          <div>
+            <label>Cores (opcional)</label>
+            <div class="apf-colors-list" id="apfColorsList"></div>
+            <div class="apf-add-color">
+              <input type="color" id="apfColorPicker" value="#ff6b9d"/>
+              <input type="text" id="apfColorName" placeholder="Nome da cor (ex: Rosa)"/>
+              <button class="admin-close" style="padding:8px 14px;font-size:.78rem;white-space:nowrap;" onclick="apfAddColor()">+ Cor</button>
+            </div>
+          </div>
+          <div>
+            <label>Descrição (opcional)</label>
+            <textarea id="apfDesc" placeholder="Tecido, caimento, dicas de uso..."></textarea>
+          </div>
+        </div>
+        <div id="apfStatus" class="apf-status"></div>
+        <div class="admin-footer" style="flex-shrink:0;">
+          <button class="admin-save" onclick="apfPublish()">🚀 Publicar no Site</button>
+          <button class="admin-close" onclick="closeAdmin()">Fechar</button>
+        </div>
+      </div>
+
+      <!-- CONFIG -->
+      <div id="adminCfgScreen" style="display:none;flex-direction:column;gap:16px;flex:1;">
+        <div class="acfg">
+          <div>
+            <label>GitHub Personal Access Token</label>
+            <input type="password" id="cfgToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/>
+            <div class="acfg-hint" style="margin-top:8px;">Necessário para publicar produtos automaticamente.<br>Crie em: GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic). Marque o escopo <strong>repo</strong>.</div>
+          </div>
+        </div>
+        <div id="cfgStatus" class="apf-status"></div>
+        <div class="admin-footer">
+          <button class="admin-save" onclick="cfgSave()">✓ Salvar Token</button>
+          <button class="admin-close" onclick="closeAdmin()">Fechar</button>
+        </div>
       </div>
     </div>
   </div>
