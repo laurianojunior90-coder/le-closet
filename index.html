@@ -2492,9 +2492,19 @@ async function apfPublish(){
     if(!metaRes.ok) throw new Error('Erro ao buscar arquivo: ' + metaRes.status);
     const meta = await metaRes.json();
 
-    const currentHtml = new TextDecoder().decode(
-      Uint8Array.from(atob(meta.content.replace(/\n/g,'')), c=>c.charCodeAt(0))
-    );
+    let currentHtml;
+    if(meta.content){
+      currentHtml = new TextDecoder().decode(
+        Uint8Array.from(atob(meta.content.replace(/
+/g,'')), c=>c.charCodeAt(0))
+      );
+    } else if(meta.download_url){
+      const rawRes = await fetch(meta.download_url);
+      if(!rawRes.ok) throw new Error('Erro ao baixar arquivo: ' + rawRes.status);
+      currentHtml = await rawRes.text();
+    } else {
+      throw new Error('Nao foi possivel obter o conteudo do arquivo.');
+    }
 
     const marker = ']; // ##PRODS_END##';
     if(!currentHtml.includes(marker)) throw new Error('Marcador não encontrado no arquivo remoto.');
