@@ -1247,9 +1247,9 @@ footer {
 }
 .admin-overlay.open { display: flex; }
 .admin-box {
-  background: #fff; border-radius: 20px; padding: 36px;
-  width: 520px; max-width: 95vw; max-height: 85vh;
-  display: flex; flex-direction: column; gap: 20px;
+  background: #fff; border-radius: 20px; padding: 28px;
+  width: 520px; max-width: 95vw; height: 88vh; max-height: 680px;
+  display: flex; flex-direction: column; gap: 16px; overflow: hidden;
   box-shadow: 0 20px 60px rgba(0,0,0,0.2);
 }
 .admin-title { font-family: var(--font); font-size: 1.3rem; font-weight: 700; color: var(--charcoal); letter-spacing: -0.02em; }
@@ -1805,6 +1805,7 @@ function logoClick(){
 }
 
 function openAdmin(){
+  document.body.style.overflow='hidden';
   document.getElementById('adminPassScreen').style.display='';
   document.getElementById('adminMainScreen').style.display='none';
   document.getElementById('adminPassInput').value='';
@@ -1812,7 +1813,7 @@ function openAdmin(){
   document.getElementById('adminOverlay').classList.add('open');
   setTimeout(()=>document.getElementById('adminPassInput').focus(), 100);
 }
-function closeAdmin(){ document.getElementById('adminOverlay').classList.remove('open'); }
+function closeAdmin(){ document.getElementById('adminOverlay').classList.remove('open'); document.body.style.overflow=''; }
 
 function checkAdminPass(){
   if(document.getElementById('adminPassInput').value === ADMIN_PASS){
