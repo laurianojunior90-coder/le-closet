@@ -2495,9 +2495,9 @@ async function apfPublish(){
 
     let currentHtml;
     if(meta.content){
+      const b64 = meta.content.replace(/[^A-Za-z0-9+\/=]/g, '');
       currentHtml = new TextDecoder().decode(
-        Uint8Array.from(atob(meta.content.replace(/
-/g,'')), c=>c.charCodeAt(0))
+        Uint8Array.from(atob(b64), c=>c.charCodeAt(0))
       );
     } else if(meta.download_url){
       const rawRes = await fetch(meta.download_url);
