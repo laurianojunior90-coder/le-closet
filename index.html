@@ -1355,7 +1355,7 @@ footer {
 
 <header>
   <div class="header-top">
-    <a href="#" class="logo" onclick="logoClick()">Lê <em>Closet</em></a>
+    <a href="#" class="logo" onclick="logoClick(event)">Lê <em>Closet</em></a>
     <div class="header-search">
       <span class="search-icon">✦</span>
       <input type="text" placeholder="Buscar peças..."/>
@@ -1797,7 +1797,8 @@ function stockBadge(id){
 const ADMIN_PASS = 'lecloset123';
 let logoClicks = 0, logoTimer = null;
 
-function logoClick(){
+function logoClick(e){
+  if(e) e.preventDefault();
   logoClicks++;
   clearTimeout(logoTimer);
   logoTimer = setTimeout(()=>{ logoClicks=0; }, 2000);
