@@ -2346,6 +2346,25 @@ function cfgSave(){
   apfSetStatus('cfgStatus','ok','Token salvo com sucesso!');
 }
 
+async function cfgTest(){
+  const tok = document.getElementById('cfgToken').value.trim();
+  if(!tok){ apfSetStatus('cfgStatus','err','Cole o token antes de testar.'); return; }
+  apfSetStatus('cfgStatus','loading','Testando token...');
+  try {
+    const res = await fetch('https://api.github.com/repos/laurianojunior90-coder/le-closet/contents/index.html?ref=main', {
+      headers:{ Authorization:`token ${tok}`, Accept:'application/vnd.github.v3+json' }
+    });
+    if(res.status===401) throw new Error('Token inválido ou expirado. Crie um novo.');
+    if(res.status===403) throw new Error('Token sem permissão. Marque o escopo "repo" ao criar.');
+    if(res.status===404) throw new Error('Repositório não encontrado. Verifique o token.');
+    if(!res.ok) throw new Error('Erro inesperado: ' + res.status);
+    const data = await res.json();
+    apfSetStatus('cfgStatus','ok','✓ Token válido! Arquivo encontrado (' + (data.size/1024).toFixed(0) + ' KB).');
+  } catch(e) {
+    apfSetStatus('cfgStatus','err', e.message);
+  }
+}
+
 // ── NOVO PRODUTO ───────────────────────────────────────────────────────────────
 let apfPhotosData = [];
 let apfColorsData = [];
@@ -2487,11 +2506,25 @@ async function apfPublish(){
   const owner='laurianojunior90-coder', repo='le-closet', path='index.html', branch='main';
   const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
 
+  function bytesToBase64(bytes){
+    let binary = '';
+    const chunk = 0x8000;
+    for(let i=0; i<bytes.length; i+=chunk)
+      binary += String.fromCharCode(...bytes.subarray(i, i+chunk));
+    return btoa(binary);
+  }
+
   try {
     const metaRes = await fetch(`${apiBase}?ref=${branch}`, {
       headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' }
     });
-    if(!metaRes.ok) throw new Error('Erro ao buscar arquivo: ' + metaRes.status);
+    if(!metaRes.ok){
+      const body = await metaRes.json().catch(()=>({}));
+      if(metaRes.status===401) throw new Error('Token inválido ou expirado (401). Crie um novo token em GitHub → Settings → Developer settings.');
+      if(metaRes.status===403) throw new Error('Token sem permissão (403). Certifique-se de marcar o escopo "repo" ao criar o token.');
+      if(metaRes.status===404) throw new Error('Repositório não encontrado (404). Verifique se o token tem acesso ao repositório.');
+      throw new Error((body.message||'Erro ao buscar arquivo') + ' ('+metaRes.status+')');
+    }
     const meta = await metaRes.json();
 
     let currentHtml;
@@ -2501,24 +2534,25 @@ async function apfPublish(){
         Uint8Array.from(atob(b64), c=>c.charCodeAt(0))
       );
     } else if(meta.download_url){
-      const rawRes = await fetch(meta.download_url);
+      apfSetStatus('apfStatus','loading','Baixando arquivo (>1MB)... aguarde');
+      const rawRes = await fetch(meta.download_url, {
+        headers:{ Authorization:`token ${token}` }
+      });
       if(!rawRes.ok) throw new Error('Erro ao baixar arquivo: ' + rawRes.status);
       currentHtml = await rawRes.text();
     } else {
-      throw new Error('Nao foi possivel obter o conteudo do arquivo.');
+      throw new Error('Não foi possível obter o conteúdo do arquivo.');
     }
 
     const marker = ']; // ##PRODS_END##';
-    if(!currentHtml.includes(marker)) throw new Error('Marcador não encontrado no arquivo remoto.');
+    if(!currentHtml.includes(marker)) throw new Error('Marcador ##PRODS_END## não encontrado — arquivo pode estar desatualizado.');
 
     const newProdsJs = result.prods.map(jsonifyProd).join(',\n') + ',';
     const updated = currentHtml.replace(marker, newProdsJs + '\n' + marker);
 
-    const encoder = new TextEncoder();
-    const bytes = encoder.encode(updated);
-    let binary = '';
-    bytes.forEach(b => binary += String.fromCharCode(b));
-    const encoded = btoa(binary);
+    apfSetStatus('apfStatus','loading','Codificando e enviando para o GitHub...');
+    const bytes = new TextEncoder().encode(updated);
+    const encoded = bytesToBase64(bytes);
 
     const commitRes = await fetch(apiBase, {
       method:'PUT',
@@ -2532,7 +2566,9 @@ async function apfPublish(){
     });
 
     if(!commitRes.ok){
-      const err = await commitRes.json();
+      const err = await commitRes.json().catch(()=>({}));
+      if(commitRes.status===409) throw new Error('Conflito de versão (409) — aguarde 30 segundos e tente novamente.');
+      if(commitRes.status===422) throw new Error('Arquivo muito grande para a API do GitHub (422). Contate o suporte.');
       throw new Error(err.message || 'Erro ao commitar: ' + commitRes.status);
     }
 
@@ -2687,6 +2723,7 @@ function apfResetForm(){
         <div id="cfgStatus" class="apf-status"></div>
         <div class="admin-footer">
           <button class="admin-save" onclick="cfgSave()">✓ Salvar Token</button>
+          <button class="admin-save" style="background:#555;" onclick="cfgTest()">🔍 Testar Token</button>
           <button class="admin-close" onclick="closeAdmin()">Fechar</button>
         </div>
       </div>
