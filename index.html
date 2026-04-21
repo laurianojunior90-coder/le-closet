@@ -2436,15 +2436,20 @@ function apfAddPhotos(input){
       img.onerror = () => apfSetStatus('apfStatus','err','[ERRO] Imagem inválida.');
       img.onload = () => {
         apfSetStatus('apfStatus','loading','[4] Comprimindo ' + img.width + 'x' + img.height + '...');
-        const MAX = 1200;
-        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
-        const canvas = document.createElement('canvas');
-        canvas.width  = Math.round(img.width  * scale);
-        canvas.height = Math.round(img.height * scale);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        apfPhotosData.push(canvas.toDataURL('image/jpeg', 0.82));
-        apfSetStatus('apfStatus','ok','[5] Foto adicionada! Total: ' + apfPhotosData.length);
-        apfRenderPhotos();
+        try {
+          const MAX = 800;
+          const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width  = Math.round(img.width  * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.78);
+          apfPhotosData.push(dataUrl);
+          apfSetStatus('apfStatus','ok','[5] Foto adicionada! Total: ' + apfPhotosData.length);
+          apfRenderPhotos();
+        } catch(err) {
+          apfSetStatus('apfStatus','err','[ERRO canvas] ' + err.message);
+        }
       };
       img.src = e.target.result;
     };
