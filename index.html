@@ -2453,7 +2453,8 @@ function apfAddPhotos(input){
 
 function apfRenderPhotos(){
   const container = document.getElementById('apfPhotos');
-  const items = apfPhotosData.map((src,i)=>`
+  const photos = window.apfPhotosData || [];
+  const items = photos.map((src,i)=>`
     <div class="apf-photo-item">
       <img src="${src}" alt="foto ${i+1}"/>
       <button type="button" class="apf-photo-del" onclick="apfDelPhoto(${i})">✕</button>
@@ -2461,17 +2462,18 @@ function apfRenderPhotos(){
   container.innerHTML = items + `<div class="apf-photo-add" onclick="document.getElementById('apfPhotoInput').click()">＋</div>`;
 }
 
-function apfDelPhoto(i){ apfPhotosData.splice(i,1); apfRenderPhotos(); }
+function apfDelPhoto(i){ (window.apfPhotosData||[]).splice(i,1); apfRenderPhotos(); }
 
 function apfAddColor(){
+  window.apfColorsData = window.apfColorsData || [];
   if(apfSelectedPreset === null){
     const name = document.getElementById('apfColorName').value.trim();
     if(!name){ apfSetStatus('apfStatus','err','Selecione uma cor antes de adicionar.'); return; }
-    apfColorsData.push({hex:'#cccccc', name});
+    window.apfColorsData.push({hex:'#cccccc', name});
   } else {
     const c = APF_PRESET_COLORS[apfSelectedPreset];
     const name = document.getElementById('apfColorName').value.trim() || c.name;
-    apfColorsData.push({hex: c.hex, name});
+    window.apfColorsData.push({hex: c.hex, name});
   }
   apfRenderColors();
   document.getElementById('apfColorName').value='';
@@ -2481,7 +2483,8 @@ function apfAddColor(){
 }
 
 function apfRenderColors(){
-  document.getElementById('apfColorsList').innerHTML = apfColorsData.map((c,i)=>`
+  const colors = window.apfColorsData || [];
+  document.getElementById('apfColorsList').innerHTML = colors.map((c,i)=>`
     <div class="apf-color-item">
       <div class="apf-color-swatch" style="background:${c.hex}"></div>
       <span>${c.name}</span>
@@ -2489,7 +2492,7 @@ function apfRenderColors(){
     </div>`).join('');
 }
 
-function apfDelColor(i){ apfColorsData.splice(i,1); apfRenderColors(); }
+function apfDelColor(i){ (window.apfColorsData||[]).splice(i,1); apfRenderColors(); }
 
 function apfSetStatus(id, type, msg){
   const el = document.getElementById(id);
@@ -2517,7 +2520,9 @@ function apfBuildProduct(){
   if(isNaN(price))   errors.push('Preço obrigatório');
   if(!cat)           errors.push('Categoria obrigatória');
   if(!sizes.length)  errors.push('Selecione ao menos um tamanho');
-  if(!apfPhotosData.length) errors.push('Adicione ao menos uma foto');
+  const photos = window.apfPhotosData || [];
+  const colors = window.apfColorsData || [];
+  if(!photos.length) errors.push('Adicione ao menos uma foto');
   if(errors.length)  return {error: errors.join(' · ')};
 
   const newId = Math.max(...PRODS.map(p=>p.id), 100) + Math.floor(Math.random()*900)+100;
@@ -2525,16 +2530,16 @@ function apfBuildProduct(){
 
   const base = {
     id: newId, name,
-    img: apfPhotosData[0],
-    gallery: apfPhotosData.slice(1),
+    img: photos[0],
+    gallery: photos.slice(1),
     cat, icon: icons[cat]||'👗', price, sizes,
   };
   if(oldP)  base.old  = oldP;
   if(tag)   base.tag  = tag;
   if(desc)  base.desc = desc;
-  if(apfColorsData.length){
-    base.colors = apfColorsData.map(c=>c.hex);
-    base.cnames = apfColorsData.map(c=>c.name);
+  if(colors.length){
+    base.colors = colors.map(c=>c.hex);
+    base.cnames = colors.map(c=>c.name);
   }
 
   const prods = [];
@@ -2661,7 +2666,7 @@ function apfResetForm(){
   const cat=document.getElementById('apfCat'); if(cat) cat.value='';
   const tag=document.getElementById('apfTag'); if(tag) tag.value='';
   document.querySelectorAll('#apfForm .apf-check.sel').forEach(el=>el.classList.remove('sel'));
-  apfPhotosData=[]; apfColorsData=[]; apfSelectedPreset=null;
+  window.apfPhotosData=[]; window.apfColorsData=[]; apfSelectedPreset=null;
   apfRenderPhotos(); apfRenderColors(); apfInitColorPresets();
   document.getElementById('apfCustomPreview').style.background='#cccccc';
   document.getElementById('apfStatus').className='apf-status';
