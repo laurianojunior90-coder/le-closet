@@ -2422,20 +2422,16 @@ function apfUpdateCustomPreview(){
 function toggleCheck(el){ el.classList.toggle('sel'); }
 
 function apfAddPhotos(input){
-  apfSetStatus('apfStatus','loading','[1] Função chamada...');
   const files = Array.from(input.files);
-  if(!files.length){ apfSetStatus('apfStatus','err','[ERRO] Nenhum arquivo recebido.'); return; }
-  apfSetStatus('apfStatus','loading','[2] ' + files.length + ' arquivo(s) — lendo...');
+  if(!files.length) return;
   input.value = '';
   files.forEach(file => {
     const reader = new FileReader();
-    reader.onerror = () => apfSetStatus('apfStatus','err','[ERRO] FileReader falhou.');
+    reader.onerror = () => apfSetStatus('apfStatus','err','Erro ao ler foto. Tente novamente.');
     reader.onload = e => {
-      apfSetStatus('apfStatus','loading','[3] Arquivo lido — carregando imagem...');
       const img = new Image();
-      img.onerror = () => apfSetStatus('apfStatus','err','[ERRO] Imagem inválida.');
+      img.onerror = () => apfSetStatus('apfStatus','err','Foto inválida. Tente outra.');
       img.onload = () => {
-        apfSetStatus('apfStatus','loading','[4] Comprimindo ' + img.width + 'x' + img.height + '...');
         try {
           const MAX = 800;
           const scale = Math.min(1, MAX / Math.max(img.width, img.height));
@@ -2443,12 +2439,10 @@ function apfAddPhotos(input){
           canvas.width  = Math.round(img.width  * scale);
           canvas.height = Math.round(img.height * scale);
           canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.78);
-          (window.apfPhotosData = window.apfPhotosData || []).push(dataUrl);
-          apfSetStatus('apfStatus','ok','[5] Foto adicionada! Total: ' + window.apfPhotosData.length);
+          (window.apfPhotosData = window.apfPhotosData || []).push(canvas.toDataURL('image/jpeg', 0.78));
           apfRenderPhotos();
         } catch(err) {
-          apfSetStatus('apfStatus','err','[ERRO canvas] ' + err.message);
+          apfSetStatus('apfStatus','err','Erro ao processar foto: ' + err.message);
         }
       };
       img.src = e.target.result;
