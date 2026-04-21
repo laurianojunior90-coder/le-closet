@@ -2371,8 +2371,8 @@ async function cfgTest(){
 }
 
 // ── NOVO PRODUTO ───────────────────────────────────────────────────────────────
-var apfPhotosData = [];
-var apfColorsData = [];
+window.apfPhotosData = [];
+window.apfColorsData = [];
 
 const APF_PRESET_COLORS = [
   {hex:'#1a1a1a', name:'Preto'},
@@ -2444,8 +2444,8 @@ function apfAddPhotos(input){
           canvas.height = Math.round(img.height * scale);
           canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
           const dataUrl = canvas.toDataURL('image/jpeg', 0.78);
-          apfPhotosData.push(dataUrl);
-          apfSetStatus('apfStatus','ok','[5] Foto adicionada! Total: ' + apfPhotosData.length);
+          (window.apfPhotosData = window.apfPhotosData || []).push(dataUrl);
+          apfSetStatus('apfStatus','ok','[5] Foto adicionada! Total: ' + window.apfPhotosData.length);
           apfRenderPhotos();
         } catch(err) {
           apfSetStatus('apfStatus','err','[ERRO canvas] ' + err.message);
