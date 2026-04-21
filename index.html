@@ -2422,16 +2422,20 @@ function apfUpdateCustomPreview(){
 function toggleCheck(el){ el.classList.toggle('sel'); }
 
 function apfAddPhotos(input){
+  apfSetStatus('apfStatus','loading','[1] Função chamada...');
   const files = Array.from(input.files);
-  if(!files.length) return;
+  if(!files.length){ apfSetStatus('apfStatus','err','[ERRO] Nenhum arquivo recebido.'); return; }
+  apfSetStatus('apfStatus','loading','[2] ' + files.length + ' arquivo(s) — lendo...');
   input.value = '';
   files.forEach(file => {
     const reader = new FileReader();
-    reader.onerror = () => apfSetStatus('apfStatus','err','Erro ao ler foto. Tente novamente.');
+    reader.onerror = () => apfSetStatus('apfStatus','err','[ERRO] FileReader falhou.');
     reader.onload = e => {
+      apfSetStatus('apfStatus','loading','[3] Arquivo lido — carregando imagem...');
       const img = new Image();
-      img.onerror = () => apfSetStatus('apfStatus','err','Foto inválida. Tente outra.');
+      img.onerror = () => apfSetStatus('apfStatus','err','[ERRO] Imagem inválida.');
       img.onload = () => {
+        apfSetStatus('apfStatus','loading','[4] Comprimindo ' + img.width + 'x' + img.height + '...');
         const MAX = 1200;
         const scale = Math.min(1, MAX / Math.max(img.width, img.height));
         const canvas = document.createElement('canvas');
@@ -2439,6 +2443,7 @@ function apfAddPhotos(input){
         canvas.height = Math.round(img.height * scale);
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
         apfPhotosData.push(canvas.toDataURL('image/jpeg', 0.82));
+        apfSetStatus('apfStatus','ok','[5] Foto adicionada! Total: ' + apfPhotosData.length);
         apfRenderPhotos();
       };
       img.src = e.target.result;
