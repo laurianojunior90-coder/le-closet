@@ -1295,9 +1295,13 @@ footer {
 .apf-color-item { display:flex; align-items:center; gap:6px; background:var(--cream); padding:6px 10px; border-radius:8px; font-size:.78rem; }
 .apf-color-swatch { width:18px; height:18px; border-radius:50%; border:1.5px solid rgba(0,0,0,.12); flex-shrink:0; }
 .apf-color-del { background:none; border:none; cursor:pointer; color:var(--muted); font-size:.7rem; padding:0 0 0 4px; }
-.apf-add-color { display:flex; gap:8px; align-items:center; margin-top:6px; }
-.apf-add-color input[type=color] { width:36px; height:36px; border:none; border-radius:8px; padding:2px; cursor:pointer; background:none; }
-.apf-add-color input[type=text] { flex:1; }
+.apf-color-presets { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.apf-color-preset { width:28px; height:28px; border-radius:50%; border:2px solid transparent; cursor:pointer; transition:transform .15s, border-color .15s; flex-shrink:0; }
+.apf-color-preset:hover { transform:scale(1.15); }
+.apf-color-preset.selected { border-color:var(--charcoal); transform:scale(1.15); }
+.apf-custom-color { display:flex; gap:8px; align-items:center; margin-top:8px; }
+.apf-custom-color input[type=text] { flex:1; font-size:.82rem; }
+.apf-custom-color .apf-custom-preview { width:28px; height:28px; border-radius:50%; border:1.5px solid var(--border); flex-shrink:0; background:#ff6b9d; }
 .apf-status { font-family:var(--font); font-size:.82rem; padding:10px 14px; border-radius:10px; text-align:center; display:none; }
 .apf-status.ok { background:#d1fae5; color:#065f46; display:block; }
 .apf-status.err { background:#fee2e2; color:#991b1b; display:block; }
@@ -1351,7 +1355,7 @@ footer {
 </head>
 <body>
 
-<div class="topbar">Frete grátis acima de R$199 <span>·</span> Parcele em até 3x sem juros <span>·</span> Troca fácil em até 7 dias</div>
+<div class="topbar">🚀 Entrega Rápida para todo o Brasil <span>·</span> Parcele em até 3x sem juros <span>·</span> Troca fácil em até 7 dias</div>
 
 <header>
   <div class="header-top">
@@ -1423,7 +1427,7 @@ footer {
 
 <!-- SHIP BAR -->
 <div class="ship-bar">
-  <div class="ship-item"><span class="ship-icon">🚚</span><div><strong>Frete Grátis</strong> acima de R$199</div></div>
+  <div class="ship-item"><span class="ship-icon">🚀</span><div><strong>Entrega Rápida</strong> para todo o Brasil</div></div>
   <div class="ship-item"><span class="ship-icon">🔄</span><div><strong>Troca Fácil</strong> em até 7 dias</div></div>
   <div class="ship-item"><span class="ship-icon">💳</span><div><strong>3x sem juros</strong> no cartão</div></div>
   <div class="ship-item"><span class="ship-icon">🔒</span><div><strong>Compra segura</strong> garantida</div></div>
@@ -2333,6 +2337,7 @@ function switchAdminTab(tab){
     if(btn) btn.classList.toggle('active', t===tab);
   });
   if(tab==='stock') buildAdminList();
+  if(tab==='prod') apfInitColorPresets();
   if(tab==='cfg'){
     const tok = localStorage.getItem('lecloset_gh_token')||'';
     document.getElementById('cfgToken').value = tok;
@@ -2369,6 +2374,51 @@ async function cfgTest(){
 let apfPhotosData = [];
 let apfColorsData = [];
 
+const APF_PRESET_COLORS = [
+  {hex:'#1a1a1a', name:'Preto'},
+  {hex:'#ffffff', name:'Branco'},
+  {hex:'#9E9E9E', name:'Cinza'},
+  {hex:'#D4B896', name:'Bege'},
+  {hex:'#F8BBD0', name:'Rosa Claro'},
+  {hex:'#E91E63', name:'Rosa'},
+  {hex:'#C2185B', name:'Pink'},
+  {hex:'#e53935', name:'Vermelho'},
+  {hex:'#FB8C00', name:'Laranja'},
+  {hex:'#FDD835', name:'Amarelo'},
+  {hex:'#43A047', name:'Verde'},
+  {hex:'#80DEEA', name:'Verde Água'},
+  {hex:'#1E88E5', name:'Azul'},
+  {hex:'#283593', name:'Azul Marinho'},
+  {hex:'#7B1FA2', name:'Roxo'},
+  {hex:'#795548', name:'Marrom'},
+];
+
+let apfSelectedPreset = null;
+
+function apfInitColorPresets(){
+  const container = document.getElementById('apfColorPresets');
+  if(!container) return;
+  container.innerHTML = APF_PRESET_COLORS.map((c,i)=>
+    `<div class="apf-color-preset" title="${c.name}" style="background:${c.hex}"
+      onclick="apfSelectPreset(${i})"></div>`
+  ).join('');
+}
+
+function apfSelectPreset(i){
+  apfSelectedPreset = i;
+  document.querySelectorAll('.apf-color-preset').forEach((el,idx)=>
+    el.classList.toggle('selected', idx===i));
+  const c = APF_PRESET_COLORS[i];
+  document.getElementById('apfCustomPreview').style.background = c.hex;
+  document.getElementById('apfColorName').value = c.name;
+}
+
+function apfUpdateCustomPreview(){
+  const name = document.getElementById('apfColorName').value.trim();
+  if(apfSelectedPreset===null) return;
+  // mantém preview da cor selecionada
+}
+
 function toggleCheck(el){ el.classList.toggle('sel'); }
 
 function apfAddPhotos(input){
@@ -2391,19 +2441,28 @@ function apfRenderPhotos(){
   const items = apfPhotosData.map((src,i)=>`
     <div class="apf-photo-item">
       <img src="${src}" alt="foto ${i+1}"/>
-      <button class="apf-photo-del" onclick="apfDelPhoto(${i})">✕</button>
+      <button type="button" class="apf-photo-del" onclick="apfDelPhoto(${i})">✕</button>
     </div>`).join('');
-  container.innerHTML = items + `<label for="apfPhotoInput" class="apf-photo-add">＋</label>`;
+  container.innerHTML = items + `<div class="apf-photo-add" onclick="document.getElementById('apfPhotoInput').click()">＋</div>`;
 }
 
 function apfDelPhoto(i){ apfPhotosData.splice(i,1); apfRenderPhotos(); }
 
 function apfAddColor(){
-  const hex  = document.getElementById('apfColorPicker').value;
-  const name = document.getElementById('apfColorName').value.trim() || hex;
-  apfColorsData.push({hex, name});
+  if(apfSelectedPreset === null){
+    const name = document.getElementById('apfColorName').value.trim();
+    if(!name){ apfSetStatus('apfStatus','err','Selecione uma cor antes de adicionar.'); return; }
+    apfColorsData.push({hex:'#cccccc', name});
+  } else {
+    const c = APF_PRESET_COLORS[apfSelectedPreset];
+    const name = document.getElementById('apfColorName').value.trim() || c.name;
+    apfColorsData.push({hex: c.hex, name});
+  }
   apfRenderColors();
   document.getElementById('apfColorName').value='';
+  apfSelectedPreset = null;
+  document.querySelectorAll('.apf-color-preset').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('apfCustomPreview').style.background = '#cccccc';
 }
 
 function apfRenderColors(){
@@ -2411,7 +2470,7 @@ function apfRenderColors(){
     <div class="apf-color-item">
       <div class="apf-color-swatch" style="background:${c.hex}"></div>
       <span>${c.name}</span>
-      <button class="apf-color-del" onclick="apfDelColor(${i})">✕</button>
+      <button type="button" class="apf-color-del" onclick="apfDelColor(${i})">✕</button>
     </div>`).join('');
 }
 
@@ -2587,8 +2646,9 @@ function apfResetForm(){
   const cat=document.getElementById('apfCat'); if(cat) cat.value='';
   const tag=document.getElementById('apfTag'); if(tag) tag.value='';
   document.querySelectorAll('#apfForm .apf-check.sel').forEach(el=>el.classList.remove('sel'));
-  apfPhotosData=[]; apfColorsData=[];
-  apfRenderPhotos(); apfRenderColors();
+  apfPhotosData=[]; apfColorsData=[]; apfSelectedPreset=null;
+  apfRenderPhotos(); apfRenderColors(); apfInitColorPresets();
+  document.getElementById('apfCustomPreview').style.background='#cccccc';
   document.getElementById('apfStatus').className='apf-status';
 }
 
@@ -2686,17 +2746,18 @@ function apfResetForm(){
           <div>
             <label>Fotos (1ª = capa, demais = galeria)</label>
             <div class="apf-photos" id="apfPhotos">
-              <label for="apfPhotoInput" class="apf-photo-add">＋</label>
+              <div class="apf-photo-add" onclick="document.getElementById('apfPhotoInput').click()">＋</div>
             </div>
             <input type="file" id="apfPhotoInput" accept="image/*" multiple style="display:none" onchange="apfAddPhotos(this)"/>
           </div>
           <div>
             <label>Cores (opcional)</label>
             <div class="apf-colors-list" id="apfColorsList"></div>
-            <div class="apf-add-color">
-              <input type="color" id="apfColorPicker" value="#ff6b9d"/>
-              <input type="text" id="apfColorName" placeholder="Nome da cor (ex: Rosa)"/>
-              <button class="admin-close" style="padding:8px 14px;font-size:.78rem;white-space:nowrap;" onclick="apfAddColor()">+ Cor</button>
+            <div class="apf-color-presets" id="apfColorPresets"></div>
+            <div class="apf-custom-color">
+              <div class="apf-custom-preview" id="apfCustomPreview"></div>
+              <input type="text" id="apfColorName" placeholder="Nome da cor (ex: Rosa, Verde Água...)"/>
+              <button type="button" class="admin-close" style="padding:8px 14px;font-size:.78rem;white-space:nowrap;" onclick="apfAddColor()">+ Cor</button>
             </div>
           </div>
           <div>
