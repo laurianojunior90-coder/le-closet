@@ -2443,7 +2443,7 @@ function apfRenderPhotos(){
       <img src="${src}" alt="foto ${i+1}"/>
       <button type="button" class="apf-photo-del" onclick="apfDelPhoto(${i})">✕</button>
     </div>`).join('');
-  container.innerHTML = items + `<label class="apf-photo-add"><input type="file" accept="image/*" multiple style="display:none" onchange="apfAddPhotos(this)"/>＋</label>`;
+  container.innerHTML = items + `<div class="apf-photo-add" style="position:relative">＋<input type="file" accept="image/*" multiple style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer" onchange="apfAddPhotos(this)"/></div>`;
 }
 
 function apfDelPhoto(i){ apfPhotosData.splice(i,1); apfRenderPhotos(); }
@@ -2746,7 +2746,7 @@ function apfResetForm(){
           <div>
             <label>Fotos (1ª = capa, demais = galeria)</label>
             <div class="apf-photos" id="apfPhotos">
-              <label class="apf-photo-add"><input type="file" accept="image/*" multiple style="display:none" onchange="apfAddPhotos(this)"/>＋</label>
+              <div class="apf-photo-add" style="position:relative">＋<input type="file" accept="image/*" multiple style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer" onchange="apfAddPhotos(this)"/></div>
             </div>
           </div>
           <div>
