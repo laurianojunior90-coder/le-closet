@@ -2550,7 +2550,7 @@ function apfBuildProduct(){
 }
 
 function jsonifyProd(p){
-  const esc = s => String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const esc = s => String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n');
   let s = `  {id:${p.id},name:'${esc(p.name)}',`;
   s += `img:'${p.img}',`;
   if(p.gallery && p.gallery.length) s += `gallery:[${p.gallery.map(x=>`'${x}'`).join(',')}],`;
