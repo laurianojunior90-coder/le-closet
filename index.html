@@ -2409,14 +2409,14 @@ function apfSelectPreset(i){
   document.querySelectorAll('.apf-color-preset').forEach((el,idx)=>
     el.classList.toggle('selected', idx===i));
   const c = APF_PRESET_COLORS[i];
-  document.getElementById('apfCustomPreview').style.background = c.hex;
+  document.getElementById('apfColorPicker').value = c.hex;
   document.getElementById('apfColorName').value = c.name;
 }
 
-function apfUpdateCustomPreview(){
-  const name = document.getElementById('apfColorName').value.trim();
-  if(apfSelectedPreset===null) return;
-  // mantém preview da cor selecionada
+function apfOnPickerChange(hex){
+  apfSelectedPreset = null;
+  document.querySelectorAll('.apf-color-preset').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('apfColorPicker').value = hex;
 }
 
 function toggleCheck(el){ el.classList.toggle('sel'); }
@@ -2466,20 +2466,14 @@ function apfDelPhoto(i){ (window.apfPhotosData||[]).splice(i,1); apfRenderPhotos
 
 function apfAddColor(){
   window.apfColorsData = window.apfColorsData || [];
-  if(apfSelectedPreset === null){
-    const name = document.getElementById('apfColorName').value.trim();
-    if(!name){ apfSetStatus('apfStatus','err','Selecione uma cor antes de adicionar.'); return; }
-    window.apfColorsData.push({hex:'#cccccc', name});
-  } else {
-    const c = APF_PRESET_COLORS[apfSelectedPreset];
-    const name = document.getElementById('apfColorName').value.trim() || c.name;
-    window.apfColorsData.push({hex: c.hex, name});
-  }
+  const hex = document.getElementById('apfColorPicker').value || '#cccccc';
+  const name = document.getElementById('apfColorName').value.trim();
+  if(!name){ apfSetStatus('apfStatus','err','Digite o nome da cor antes de adicionar.'); return; }
+  window.apfColorsData.push({hex, name});
   apfRenderColors();
   document.getElementById('apfColorName').value='';
   apfSelectedPreset = null;
   document.querySelectorAll('.apf-color-preset').forEach(el=>el.classList.remove('selected'));
-  document.getElementById('apfCustomPreview').style.background = '#cccccc';
 }
 
 function apfRenderColors(){
@@ -2595,7 +2589,7 @@ async function apfPublish(){
 
   try {
     const metaRes = await fetch(`${apiBase}?ref=${branch}`, {
-      headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' }
+      headers:{ Authorization:`Bearer ${token}`, Accept:'application/vnd.github.v3+json' }
     });
     if(!metaRes.ok){
       const body = await metaRes.json().catch(()=>({}));
@@ -2614,9 +2608,7 @@ async function apfPublish(){
       );
     } else if(meta.download_url){
       apfSetStatus('apfStatus','loading','Baixando arquivo (>1MB)... aguarde');
-      const rawRes = await fetch(meta.download_url, {
-        headers:{ Authorization:`token ${token}` }
-      });
+      const rawRes = await fetch(meta.download_url);
       if(!rawRes.ok) throw new Error('Erro ao baixar arquivo: ' + rawRes.status);
       currentHtml = await rawRes.text();
     } else {
@@ -2635,7 +2627,7 @@ async function apfPublish(){
 
     const commitRes = await fetch(apiBase, {
       method:'PUT',
-      headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json', 'Content-Type':'application/json' },
+      headers:{ Authorization:`Bearer ${token}`, Accept:'application/vnd.github.v3+json', 'Content-Type':'application/json' },
       body: JSON.stringify({
         message: `Produto adicionado: ${result.prods[0].name}`,
         content: encoded,
@@ -2668,7 +2660,7 @@ function apfResetForm(){
   document.querySelectorAll('#apfForm .apf-check.sel').forEach(el=>el.classList.remove('sel'));
   window.apfPhotosData=[]; window.apfColorsData=[]; apfSelectedPreset=null;
   apfRenderPhotos(); apfRenderColors(); apfInitColorPresets();
-  document.getElementById('apfCustomPreview').style.background='#cccccc';
+  document.getElementById('apfColorPicker').value='#ff6b9d';
   document.getElementById('apfStatus').className='apf-status';
 }
 
@@ -2775,7 +2767,7 @@ function apfResetForm(){
             <div class="apf-colors-list" id="apfColorsList"></div>
             <div class="apf-color-presets" id="apfColorPresets"></div>
             <div class="apf-custom-color">
-              <div class="apf-custom-preview" id="apfCustomPreview"></div>
+              <input type="color" id="apfColorPicker" value="#ff6b9d" style="width:28px;height:28px;border:none;border-radius:50%;padding:0;cursor:pointer;flex-shrink:0;" oninput="apfOnPickerChange(this.value)"/>
               <input type="text" id="apfColorName" placeholder="Nome da cor (ex: Rosa, Verde Água...)"/>
               <button type="button" class="admin-close" style="padding:8px 14px;font-size:.78rem;white-space:nowrap;" onclick="apfAddColor()">+ Cor</button>
             </div>
