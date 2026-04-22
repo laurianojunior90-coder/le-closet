@@ -1780,8 +1780,8 @@ function card(p){
       <div class="prod-price">${oldHtml}${fmt(p.price)}</div>
       <div class="swatches" id="sw${p.id}">${swatches}</div>
       <div class="chips" id="sz${p.id}">${chips}</div>
-      ${stockBadge(p.id)}
-      <button class="btn-buy" onclick="addToCart(${p.id})" ${getStock(p.id)===0?'disabled':''}>${getStock(p.id)===0?'Esgotado':'Comprar'}</button>
+      <span id="badge_${p.id}">${stockBadge(p.id,0)}</span>
+      <button id="btnBuy_${p.id}" class="btn-buy" onclick="addToCart(${p.id})" ${(()=>{const hc=(p.colors||[]).length>0;return (hc?getStockForColor(p.id,0):getStock(p.id))===0?'disabled':''})()}>${(()=>{const hc=(p.colors||[]).length>0;return (hc?getStockForColor(p.id,0):getStock(p.id))===0?'Esgotado':'Comprar'})()}</button>
     </div>
   </div>`;
 }
@@ -1790,6 +1790,10 @@ function pickColor(pid,idx,el){
   selColor[pid]=idx;
   document.querySelectorAll(`#sw${pid} .swatch`).forEach(s=>s.classList.remove('active'));
   el.classList.add('active');
+  const badgeEl=document.getElementById('badge_'+pid);
+  if(badgeEl) badgeEl.innerHTML=stockBadge(pid,idx);
+  const btnEl=document.getElementById('btnBuy_'+pid);
+  if(btnEl){ const q=getStockForColor(pid,idx); btnEl.disabled=q===0; btnEl.textContent=q===0?'Esgotado':'Comprar'; }
 }
 function pickSize(pid,sz,el){
   selSize[pid]=sz;
@@ -1804,7 +1808,18 @@ const DELETED_KEY = 'lecloset_deleted';
 function loadStock()  { try{ return JSON.parse(localStorage.getItem(STOCK_KEY)||'{}');  }catch(e){ return {}; } }
 function loadPaused() { try{ return JSON.parse(localStorage.getItem(PAUSED_KEY)||'[]'); }catch(e){ return []; } }
 function loadDeleted(){ try{ return JSON.parse(localStorage.getItem(DELETED_KEY)||'[]');}catch(e){ return []; } }
-function getStock(id){ const s=loadStock(); return s[id]!==undefined ? s[id] : 10; }
+function getStockForColor(id, colorIdx){
+  const s=loadStock(); const val=s[id];
+  if(val===undefined) return 10;
+  if(Array.isArray(val)) return val[colorIdx]!==undefined ? val[colorIdx] : 10;
+  return typeof val==='number' ? val : 10;
+}
+function getStock(id){
+  const s=loadStock(); const val=s[id];
+  if(val===undefined) return 10;
+  if(Array.isArray(val)) return val.reduce((a,b)=>a+(b||0),0);
+  return typeof val==='number' ? val : 10;
+}
 function isPaused(id) { return loadPaused().includes(id); }
 function isDeleted(id){ return loadDeleted().includes(id); }
 function isHidden(id) { return isPaused(id) || isDeleted(id); }
@@ -1836,10 +1851,12 @@ function restoreDeleted(){
   buildAdminList();
   showToast('Todos os anúncios foram restaurados.');
 }
-function stockBadge(id){
-  const q = getStock(id);
-  if(q === 0) return `<div class="stock-badge out">Esgotado</div>`;
-  if(q <= 5)  return `<div class="stock-badge low">Últimas ${q} peças!</div>`;
+function stockBadge(id, colorIdx){
+  const p=PRODS.find(x=>x.id===id);
+  const hasColors=p&&(p.colors||[]).length>0;
+  const q=hasColors ? getStockForColor(id, colorIdx!==undefined?colorIdx:0) : getStock(id);
+  if(q===0) return `<div class="stock-badge out">Esgotado</div>`;
+  if(q<=5)  return `<div class="stock-badge low">Últimas ${q} peças!</div>`;
   return `<div class="stock-badge ok">Em estoque</div>`;
 }
 
@@ -1883,24 +1900,49 @@ function buildAdminList(){
   const visible = PRODS.filter(p => !isDeleted(p.id));
   const deletedCount = PRODS.length - visible.length;
   document.getElementById('adminList').innerHTML = visible.map(p => {
-    const q = stock[p.id]!==undefined ? stock[p.id] : 10;
     const paused = isPaused(p.id);
-    return `<div class="admin-item${paused?' paused':''}">
-      <div class="admin-item-info" style="flex:1">
-        <div class="admin-item-name">${p.name}</div>
-        <div class="admin-item-cat">${p.cat}${paused?' · <span style="color:var(--rose)">pausado</span>':''}</div>
-      </div>
-      <div class="admin-stock-ctrl">
+    const hasColors = (p.colors||[]).length > 0;
+    const val = stock[p.id];
+    let stockHtml;
+    if(hasColors){
+      stockHtml = `<div style="display:flex;flex-direction:column;gap:5px;margin-top:6px;">` +
+        p.colors.map((c,i)=>{
+          const cq = Array.isArray(val) ? (val[i]!==undefined?val[i]:5) : (typeof val==='number'?val:5);
+          return `<div style="display:flex;align-items:center;gap:6px;">
+            <div style="width:13px;height:13px;border-radius:50%;background:${c};border:1px solid var(--border);flex-shrink:0;"></div>
+            <span style="font-size:0.7rem;color:var(--muted);width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.cnames[i]}</span>
+            <button class="admin-stock-btn" onclick="changeStockColor(${p.id},${i},-1)">−</button>
+            <input class="admin-stock-val" type="number" min="0" id="stock_${p.id}_${i}" value="${cq}"/>
+            <button class="admin-stock-btn" onclick="changeStockColor(${p.id},${i},+1)">+</button>
+          </div>`;
+        }).join('') + `</div>`;
+    } else {
+      const q = typeof val==='number' ? val : (val===undefined?10:10);
+      stockHtml = `<div class="admin-stock-ctrl">
         <button class="admin-stock-btn" onclick="changeStock(${p.id},-1)">−</button>
         <input class="admin-stock-val" type="number" min="0" id="stock_${p.id}" value="${q}"/>
         <button class="admin-stock-btn" onclick="changeStock(${p.id},+1)">+</button>
-      </div>
-      <div class="admin-action-btns">
-        <button class="admin-pause-btn" title="${paused?'Reativar anúncio':'Pausar anúncio'}" onclick="togglePause(${p.id})">${paused?'▶':'⏸'}</button>
-        <button class="admin-del-btn" title="Excluir anúncio" onclick="deleteProd(${p.id})">🗑</button>
+      </div>`;
+    }
+    return `<div class="admin-item${paused?' paused':''}">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div class="admin-item-name">${p.name}</div>
+            <div class="admin-item-cat">${p.cat}${paused?' · <span style="color:var(--rose)">pausado</span>':''}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;margin-left:8px;">
+            ${!hasColors ? stockHtml : ''}
+            <div class="admin-action-btns">
+              <button class="admin-pause-btn" title="${paused?'Reativar anúncio':'Pausar anúncio'}" onclick="togglePause(${p.id})">${paused?'▶':'⏸'}</button>
+              <button class="admin-del-btn" title="Excluir anúncio" onclick="deleteProd(${p.id})">🗑</button>
+            </div>
+          </div>
+        </div>
+        ${hasColors ? stockHtml : ''}
       </div>
     </div>`;
-  }).join('') + (deletedCount ? `<div class="admin-deleted-note">${deletedCount} anúncio(s) excluído(s) oculto(s). <button onclick="restoreDeleted()">Restaurar todos</button></div>` : '');
+  }).join('') + (deletedCount ? `<div class="admin-deleted-note">${deletedCount} anúncio(s) excluído(s). <button onclick="restoreDeleted()">Restaurar todos</button></div>` : '');
 }
 
 function changeStock(id, delta){
@@ -1908,11 +1950,24 @@ function changeStock(id, delta){
   inp.value = Math.max(0, parseInt(inp.value||0) + delta);
 }
 
+function changeStockColor(id, colorIdx, delta){
+  const inp = document.getElementById(`stock_${id}_${colorIdx}`);
+  if(inp) inp.value = Math.max(0, parseInt(inp.value||0) + delta);
+}
+
 function saveStock(){
   const stock = {};
   PRODS.forEach(p => {
-    const inp = document.getElementById('stock_'+p.id);
-    if(inp) stock[p.id] = Math.max(0, parseInt(inp.value||0));
+    const hasColors = (p.colors||[]).length > 0;
+    if(hasColors){
+      stock[p.id] = p.colors.map((_,i)=>{
+        const inp = document.getElementById(`stock_${p.id}_${i}`);
+        return inp ? Math.max(0, parseInt(inp.value||0)) : 5;
+      });
+    } else {
+      const inp = document.getElementById('stock_'+p.id);
+      if(inp) stock[p.id] = Math.max(0, parseInt(inp.value||0));
+    }
   });
   localStorage.setItem(STOCK_KEY, JSON.stringify(stock));
   render();
