@@ -1746,7 +1746,7 @@ let cart=[], selColor={}, selSize={};
 const fmt=v=>`R$ ${v.toFixed(2).replace('.',',')}`;
 
 function card(p){
-  const swatches = p.colors.map((c,i)=>`
+  const swatches = (p.colors||[]).map((c,i)=>`
     <div class="swatch${i===0?' active':''}" style="background:${c}"
       onclick="pickColor(${p.id},${i},this)">
       <span class="sw-tip">${p.cnames[i]}</span>
@@ -1938,7 +1938,7 @@ document.querySelectorAll('.nav-link, .cat-card').forEach(link => {
 
 function addToCart(pid){
   const p=PRODS.find(x=>x.id===pid);
-  const color=p.cnames[selColor[pid]||0];
+  const color=(p.cnames&&p.cnames[selColor[pid]||0])||'';
   const size=selSize[pid]||p.sizes[0];
   const key=`${pid}-${color}-${size}`;
   const ex=cart.find(i=>i.key===key);
@@ -2129,7 +2129,7 @@ function openPd(pid){
 
   // Info
   const oldHtml=p.old?`<small>${fmt(p.old)}</small>`:'';
-  const swatches=p.colors.map((c,i)=>`
+  const swatches=(p.colors||[]).map((c,i)=>`
     <div class="swatch${i===(selColor[pid]||0)?' active':''}" style="background:${c}"
       onclick="pdPickColor(${pid},${i},this)">
       <span class="sw-tip">${p.cnames[i]}</span>
@@ -2147,8 +2147,8 @@ function openPd(pid){
     <div class="pd-info-price">${oldHtml}${fmt(p.price)}</div>
     <div class="pd-sep"></div>
     ${descHtml}
-    <div class="pd-info-label">Cor — <span id="pdColorName" style="font-weight:400;text-transform:none;letter-spacing:0">${p.cnames[selColor[pid]||0]}</span></div>
-    <div class="swatches" id="pdSw${pid}" style="margin-bottom:20px">${swatches}</div>
+    ${swatches?`<div class="pd-info-label">Cor — <span id="pdColorName" style="font-weight:400;text-transform:none;letter-spacing:0">${(p.cnames&&p.cnames[selColor[pid]||0])||''}</span></div><div class="swatches" id="pdSw${pid}" style="margin-bottom:20px">${swatches}</div>`:''}
+
     <div class="pd-info-label">Tamanho</div>
     <div class="chips" id="pdSz${pid}">${chips}</div>
     ${unicoNote}
@@ -2185,7 +2185,7 @@ function pdPickColor(pid,idx,el){
   document.querySelectorAll(`#pdSw${pid} .swatch`).forEach(s=>s.classList.remove('active'));
   el.classList.add('active');
   const nm=document.getElementById('pdColorName');
-  if(nm) nm.textContent=p.cnames[idx];
+  if(nm && p.cnames) nm.textContent=p.cnames[idx];
 }
 
 function pdPickSize(pid,sz,el){
@@ -2201,9 +2201,10 @@ function pdAddCart(pid){
 
 function pdWpp(pid){
   const p=PRODS.find(x=>x.id===pid);
-  const color=p.cnames[selColor[pid]||0];
+  const color=(p.cnames&&p.cnames[selColor[pid]||0])||'';
   const size=selSize[pid]||p.sizes[0];
-  const msg=`Olá! Gostaria de comprar:\n\n• ${p.name}\n  Cor: ${color}\n  Tamanho: ${size}\n  Valor: ${fmt(p.price)}\n\nPode me ajudar a finalizar?`;
+  const colorLine=color?`\n  Cor: ${color}`:'';
+  const msg=`Olá! Gostaria de comprar:\n\n• ${p.name}${colorLine}\n  Tamanho: ${size}\n  Valor: ${fmt(p.price)}\n\nPode me ajudar a finalizar?`;
   window.open(`https://wa.me/5585988116379?text=${encodeURIComponent(msg)}`,'_blank');
 }
 
