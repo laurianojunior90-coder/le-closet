@@ -1262,6 +1262,13 @@ footer {
 .admin-stock-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); background: #fff; cursor: pointer; font-size: 1rem; font-weight: 600; display: flex; align-items: center; justify-content: center; color: var(--charcoal); transition: all 0.15s; }
 .admin-stock-btn:hover { background: var(--charcoal); color: #fff; border-color: var(--charcoal); }
 .admin-stock-val { width: 44px; text-align: center; font-size: 0.95rem; font-weight: 700; color: var(--charcoal); border: 1px solid var(--border); border-radius: 8px; padding: 4px; outline: none; font-family: var(--font); }
+.admin-item.paused { opacity: 0.5; }
+.admin-action-btns { display: flex; gap: 5px; flex-shrink: 0; margin-left: 4px; }
+.admin-pause-btn, .admin-del-btn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.admin-pause-btn:hover { background: var(--rose-light); border-color: var(--rose); }
+.admin-del-btn:hover { background: #fee2e2; border-color: #ef4444; }
+.admin-deleted-note { font-size: 0.72rem; color: var(--muted); text-align: center; padding: 8px 0; }
+.admin-deleted-note button { background: none; border: none; color: var(--rose); cursor: pointer; font-size: 0.72rem; text-decoration: underline; font-family: var(--font); }
 .admin-footer { display: flex; gap: 10px; }
 .admin-save { flex: 1; padding: 13px; background: var(--charcoal); color: #fff; border: none; border-radius: 980px; font-family: var(--font); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
 .admin-save:hover { opacity: 0.85; }
@@ -1395,7 +1402,7 @@ footer {
     <div class="hero-watermark">Lê Closet</div>
     <div class="hero-tag">
       <div class="hero-tag-line"></div>
-      <span class="hero-tag-text">Nova Coleção — Primavera 2025</span>
+      <span class="hero-tag-text">Nova Coleção — Primavera 2026</span>
     </div>
     <h1 class="hero-title">
       Sua <em>beleza</em>,<br>
@@ -1660,7 +1667,7 @@ footer {
   </div>
   <div class="foot-divider"></div>
   <div class="foot-bottom">
-    <span>© 2025 Lê Closet. Todos os direitos reservados.</span>
+    <span>© 2026 Lê Closet. Todos os direitos reservados.</span>
     <div class="foot-payments">
       <span class="pay-chip">PIX</span>
       <span class="pay-chip">Cartão</span>
@@ -1791,9 +1798,44 @@ function pickSize(pid,sz,el){
 }
 
 // ── ESTOQUE ──────────────────────────────────────────────────────────────────
-const STOCK_KEY = 'lecloset_stock';
-function loadStock(){ try{ return JSON.parse(localStorage.getItem(STOCK_KEY)||'{}'); }catch(e){ return {}; } }
+const STOCK_KEY   = 'lecloset_stock';
+const PAUSED_KEY  = 'lecloset_paused';
+const DELETED_KEY = 'lecloset_deleted';
+function loadStock()  { try{ return JSON.parse(localStorage.getItem(STOCK_KEY)||'{}');  }catch(e){ return {}; } }
+function loadPaused() { try{ return JSON.parse(localStorage.getItem(PAUSED_KEY)||'[]'); }catch(e){ return []; } }
+function loadDeleted(){ try{ return JSON.parse(localStorage.getItem(DELETED_KEY)||'[]');}catch(e){ return []; } }
 function getStock(id){ const s=loadStock(); return s[id]!==undefined ? s[id] : 10; }
+function isPaused(id) { return loadPaused().includes(id); }
+function isDeleted(id){ return loadDeleted().includes(id); }
+function isHidden(id) { return isPaused(id) || isDeleted(id); }
+
+function togglePause(id){
+  const paused = loadPaused();
+  const idx = paused.indexOf(id);
+  if(idx >= 0) paused.splice(idx, 1); else paused.push(id);
+  localStorage.setItem(PAUSED_KEY, JSON.stringify(paused));
+  render();
+  buildAdminList();
+}
+
+function deleteProd(id){
+  if(!confirm('Excluir este anúncio do site? Você poderá restaurar depois.')) return;
+  const deleted = loadDeleted();
+  if(!deleted.includes(id)) deleted.push(id);
+  const paused = loadPaused().filter(x => x !== id);
+  localStorage.setItem(DELETED_KEY, JSON.stringify(deleted));
+  localStorage.setItem(PAUSED_KEY, JSON.stringify(paused));
+  render();
+  buildAdminList();
+  showToast('Anúncio removido do site.');
+}
+
+function restoreDeleted(){
+  localStorage.removeItem(DELETED_KEY);
+  render();
+  buildAdminList();
+  showToast('Todos os anúncios foram restaurados.');
+}
 function stockBadge(id){
   const q = getStock(id);
   if(q === 0) return `<div class="stock-badge out">Esgotado</div>`;
@@ -1838,20 +1880,27 @@ function checkAdminPass(){
 
 function buildAdminList(){
   const stock = loadStock();
-  document.getElementById('adminList').innerHTML = PRODS.map(p => {
+  const visible = PRODS.filter(p => !isDeleted(p.id));
+  const deletedCount = PRODS.length - visible.length;
+  document.getElementById('adminList').innerHTML = visible.map(p => {
     const q = stock[p.id]!==undefined ? stock[p.id] : 10;
-    return `<div class="admin-item">
+    const paused = isPaused(p.id);
+    return `<div class="admin-item${paused?' paused':''}">
       <div class="admin-item-info" style="flex:1">
         <div class="admin-item-name">${p.name}</div>
-        <div class="admin-item-cat">${p.cat}</div>
+        <div class="admin-item-cat">${p.cat}${paused?' · <span style="color:var(--rose)">pausado</span>':''}</div>
       </div>
       <div class="admin-stock-ctrl">
         <button class="admin-stock-btn" onclick="changeStock(${p.id},-1)">−</button>
         <input class="admin-stock-val" type="number" min="0" id="stock_${p.id}" value="${q}"/>
         <button class="admin-stock-btn" onclick="changeStock(${p.id},+1)">+</button>
       </div>
+      <div class="admin-action-btns">
+        <button class="admin-pause-btn" title="${paused?'Reativar anúncio':'Pausar anúncio'}" onclick="togglePause(${p.id})">${paused?'▶':'⏸'}</button>
+        <button class="admin-del-btn" title="Excluir anúncio" onclick="deleteProd(${p.id})">🗑</button>
+      </div>
     </div>`;
-  }).join('');
+  }).join('') + (deletedCount ? `<div class="admin-deleted-note">${deletedCount} anúncio(s) excluído(s) oculto(s). <button onclick="restoreDeleted()">Restaurar todos</button></div>` : '');
 }
 
 function changeStock(id, delta){
@@ -1872,8 +1921,8 @@ function saveStock(){
 }
 
 function render(){
-  document.getElementById('gridLanc').innerHTML=PRODS.filter(p=>p.sec==='lanc').map(card).join('');
-  document.getElementById('gridDest').innerHTML=PRODS.filter(p=>p.sec==='dest').map(card).join('');
+  document.getElementById('gridLanc').innerHTML=PRODS.filter(p=>p.sec==='lanc'&&!isHidden(p.id)).map(card).join('');
+  document.getElementById('gridDest').innerHTML=PRODS.filter(p=>p.sec==='dest'&&!isHidden(p.id)).map(card).join('');
 
   // Seções por categoria
   const cats = [
@@ -1887,7 +1936,7 @@ function render(){
     {id:'gridBodies',     sec:'bodies',      cat:'bodies'},
   ];
   cats.forEach(({id, sec, cat}) => {
-    const prods = PRODS.filter(p => p.cat === cat);
+    const prods = PRODS.filter(p => p.cat === cat && !isHidden(p.id));
     const gridEl = document.getElementById(id);
     const secEl  = document.getElementById(sec);
     if(gridEl) gridEl.innerHTML = prods.map(card).join('');
