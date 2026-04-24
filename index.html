@@ -1982,7 +1982,8 @@ function logoClick(e){
   logoClicks++;
   clearTimeout(logoTimer);
   logoTimer = setTimeout(()=>{ logoClicks=0; }, 2000);
-  if(logoClicks >= 5){ logoClicks=0; openAdmin(); }
+  if(logoClicks >= 5){ logoClicks=0; openAdmin(); return; }
+  showHome();
 }
 
 function openAdmin(){
@@ -2195,6 +2196,23 @@ function render(){
 // Seções principais vs. seções de categoria
 const MAIN_SECTIONS = ['lancamentos','destaques'];
 const CAT_SECTIONS  = ['vestidos','conjuntos','blusas','calcas','macaquinhos','cropped','saias','bodies','shorts'];
+
+function showHome() {
+  MAIN_SECTIONS.forEach(s => {
+    const el = document.getElementById(s);
+    if(el) el.style.display = '';
+  });
+  CAT_SECTIONS.forEach(s => {
+    const el = document.getElementById(s);
+    if(!el) return;
+    const prods = PRODS.filter(p => p.cat === s && !isHidden(p.id));
+    el.style.display = prods.length ? '' : 'none';
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  const active = document.querySelector('.nav-link[href="#lancamentos"]');
+  if(active) active.classList.add('active');
+}
 
 function showSection(id) {
   const isMain = MAIN_SECTIONS.includes(id) || id === 'contato';
