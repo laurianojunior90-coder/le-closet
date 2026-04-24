@@ -361,6 +361,84 @@ nav::-webkit-scrollbar { display: none; }
 
 /* ---- CATEGORIES ---- */
 .cat-section { padding: 80px 48px 0; }
+
+/* ---- COLOR FILTER BAR ---- */
+.color-filter-bar {
+  padding: 40px 48px 0;
+}
+.color-filter-label {
+  font-family: var(--font);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+.color-filter-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.color-swatch-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.color-swatch-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.13);
+  transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+.color-swatch-btn:hover .color-swatch-circle {
+  transform: scale(1.13);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+}
+.color-swatch-btn.active .color-swatch-circle {
+  border-color: var(--charcoal);
+  transform: scale(1.13);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+}
+.color-swatch-name {
+  font-family: var(--font);
+  font-size: 0.62rem;
+  color: var(--muted);
+  text-align: center;
+  max-width: 48px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.color-filter-clear {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: var(--cream2);
+  border: none;
+  border-radius: 980px;
+  padding: 7px 14px;
+  font-family: var(--font);
+  font-size: 0.75rem;
+  color: var(--charcoal);
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.18s;
+  margin-left: 4px;
+}
+.color-filter-clear.visible { display: flex; }
+.color-filter-clear:hover { background: var(--border); }
+
+/* ---- SECTION RESULTADOS COR ---- */
+.section-color-results { display: none; }
 .sec-eyebrow {
   display: flex;
   align-items: center;
@@ -1049,6 +1127,7 @@ footer {
   .hero-left { padding: 60px 32px; }
   .nav-inner { padding: 0 20px; }
   .cat-section, .section, .contact-section { padding-left: 20px; padding-right: 20px; }
+  .color-filter-bar { padding-left: 20px; padding-right: 20px; }
   .ship-bar { padding: 14px 20px; gap: 20px; }
   .contact-grid { grid-template-columns: 1fr; gap: 40px; }
   .cart-sidebar { width: 100%; right: -100%; }
@@ -1395,6 +1474,7 @@ footer {
       <a href="#cropped" class="nav-link">Cropped</a>
       <a href="#saias" class="nav-link">Saias</a>
       <a href="#bodies" class="nav-link">Bodies</a>
+      <a href="#shorts" class="nav-link">Shorts</a>
       <a href="#contato" class="nav-link">Contato</a>
     </div>
   </nav>
@@ -1460,8 +1540,30 @@ footer {
     <a href="#cropped" class="cat-card"><span class="cat-icon">✨</span>Cropped</a>
     <a href="#saias" class="cat-card"><span class="cat-icon">🌷</span>Saias</a>
     <a href="#bodies" class="cat-card"><span class="cat-icon">💕</span>Bodies</a>
+    <a href="#shorts" class="cat-card"><span class="cat-icon">🩳</span>Shorts</a>
   </div>
 </div>
+
+<!-- COLOR FILTER BAR -->
+<div class="color-filter-bar" id="colorFilterBar">
+  <div class="color-filter-label">Filtrar por cor</div>
+  <div class="color-filter-swatches" id="colorSwatches"></div>
+</div>
+
+<!-- RESULTADOS POR COR -->
+<section class="section section-color-results" id="colorResults">
+  <div class="section-head">
+    <div class="section-head-left">
+      <div class="sec-eyebrow">
+        <div class="sec-eyebrow-line"></div>
+        <span class="sec-eyebrow-text">Filtro ativo</span>
+      </div>
+      <h2 class="sec-title" style="margin-bottom:0">Peças em <em id="colorResultsLabel">esta cor</em></h2>
+    </div>
+    <button class="color-filter-clear visible" onclick="clearColorFilter()" style="margin-left:auto">✕ Limpar filtro</button>
+  </div>
+  <div class="prod-grid" id="gridColorResults"></div>
+</section>
 
 <!-- LANÇAMENTOS -->
 <section class="section" id="lancamentos">
@@ -1581,6 +1683,17 @@ footer {
     </div>
   </div>
   <div class="prod-grid" id="gridBodies"></div>
+</section>
+
+<!-- CATEGORIA: SHORTS -->
+<section class="section" id="shorts" style="display:none">
+  <div class="section-head">
+    <div class="section-head-left">
+      <div class="sec-eyebrow"><span class="sec-eyebrow-text">Categoria</span></div>
+      <h2 class="sec-title" style="margin-bottom:0">🩳 <em>Shorts</em></h2>
+    </div>
+  </div>
+  <div class="prod-grid" id="gridShorts"></div>
 </section>
 
 <!-- CONTACT -->
@@ -1983,6 +2096,82 @@ function saveStock(){
   showToast('Estoque atualizado com sucesso!');
 }
 
+window.activeColorFilter = null;
+
+function buildColorFilter() {
+  const seen = {};
+  PRODS.forEach(p => {
+    (p.colors||[]).forEach((hex, i) => {
+      const key = hex.toLowerCase();
+      if(!seen[key]) seen[key] = { hex, name: (p.cnames&&p.cnames[i]) || hex };
+    });
+  });
+  const swatches = Object.values(seen);
+  const container = document.getElementById('colorSwatches');
+  if(!container) return;
+  if(swatches.length === 0) {
+    document.getElementById('colorFilterBar').style.display = 'none';
+    return;
+  }
+  container.innerHTML = swatches.map(({hex, name}) => `
+    <button class="color-swatch-btn" onclick="setColorFilter('${hex}','${name.replace(/'/g,"&#39;")}')" data-hex="${hex.toLowerCase()}" title="${name}">
+      <div class="color-swatch-circle" style="background:${hex}"></div>
+      <span class="color-swatch-name">${name}</span>
+    </button>
+  `).join('');
+}
+
+function setColorFilter(hex, name) {
+  window.activeColorFilter = { hex: hex.toLowerCase(), name };
+  document.querySelectorAll('.color-swatch-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.hex === hex.toLowerCase());
+  });
+  applyColorFilter();
+}
+
+function clearColorFilter() {
+  window.activeColorFilter = null;
+  document.querySelectorAll('.color-swatch-btn').forEach(btn => btn.classList.remove('active'));
+  applyColorFilter();
+}
+
+function applyColorFilter() {
+  const f = window.activeColorFilter;
+  const resultsSection = document.getElementById('colorResults');
+  const MAIN_IDS = ['lancamentos','destaques'];
+  const CAT_IDS  = ['vestidos','conjuntos','blusas','calcas','macaquinhos','cropped','saias','bodies','shorts'];
+
+  if(f) {
+    // Mostra seção de resultados, oculta o resto
+    resultsSection.style.display = '';
+    [...MAIN_IDS, ...CAT_IDS].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.style.display = 'none';
+    });
+    const matched = PRODS.filter(p =>
+      !isHidden(p.id) &&
+      (p.colors||[]).some(c => c.toLowerCase() === f.hex)
+    );
+    document.getElementById('gridColorResults').innerHTML = matched.length
+      ? matched.map(card).join('')
+      : '<p style="color:var(--muted);padding:32px 0;font-size:0.9rem">Nenhuma peça encontrada nessa cor.</p>';
+    document.getElementById('colorResultsLabel').textContent = f.name;
+    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    resultsSection.style.display = 'none';
+    // Volta ao estado padrão (lançamentos + destaques)
+    MAIN_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.style.display = '';
+    });
+    CAT_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.style.display = 'none';
+    });
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  }
+}
+
 function render(){
   document.getElementById('gridLanc').innerHTML=PRODS.filter(p=>p.sec==='lanc'&&!isHidden(p.id)).map(card).join('');
   document.getElementById('gridDest').innerHTML=PRODS.filter(p=>p.sec==='dest'&&!isHidden(p.id)).map(card).join('');
@@ -1997,6 +2186,7 @@ function render(){
     {id:'gridCropped',    sec:'cropped',     cat:'cropped'},
     {id:'gridSaias',      sec:'saias',       cat:'saias'},
     {id:'gridBodies',     sec:'bodies',      cat:'bodies'},
+    {id:'gridShorts',     sec:'shorts',      cat:'shorts'},
   ];
   cats.forEach(({id, sec, cat}) => {
     const prods = PRODS.filter(p => p.cat === cat && !isHidden(p.id));
@@ -2007,11 +2197,12 @@ function render(){
   });
 
   PRODS.forEach(p=>{ selColor[p.id]=0; selSize[p.id]=p.sizes[0]; });
+  buildColorFilter();
 }
 
 // Seções principais vs. seções de categoria
 const MAIN_SECTIONS = ['lancamentos','destaques'];
-const CAT_SECTIONS  = ['vestidos','conjuntos','blusas','calcas','macaquinhos','cropped','saias','bodies'];
+const CAT_SECTIONS  = ['vestidos','conjuntos','blusas','calcas','macaquinhos','cropped','saias','bodies','shorts'];
 
 function showSection(id) {
   const isMain = MAIN_SECTIONS.includes(id) || id === 'contato';
@@ -2636,7 +2827,7 @@ function apfBuildProduct(){
   if(errors.length)  return {error: errors.join(' · ')};
 
   const newId = Math.max(...PRODS.map(p=>p.id), 100) + Math.floor(Math.random()*900)+100;
-  const icons = {blusas:'👚',cropped:'👕',vestidos:'👗',conjuntos:'🩱',calcas:'👖',saias:'🩴',bodies:'🩱',macaquinhos:'🦋'};
+  const icons = {blusas:'👚',cropped:'👕',vestidos:'👗',conjuntos:'🩱',calcas:'👖',saias:'🩴',bodies:'🩱',macaquinhos:'🦋',shorts:'🩳'};
 
   const base = {
     id: newId, name,
@@ -2843,6 +3034,7 @@ function apfResetForm(){
                 <option value="saias">Saias</option>
                 <option value="bodies">Bodies</option>
                 <option value="macaquinhos">Macaquinhos</option>
+                <option value="shorts">Shorts</option>
               </select>
             </div>
             <div>
