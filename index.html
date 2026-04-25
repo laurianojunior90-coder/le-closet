@@ -1454,6 +1454,52 @@ footer {
   .pd-info-col{padding:20px;border-left:none;border-top:1px solid var(--border);}
 }
 
+/* ---- MODAL PRIVACIDADE ---- */
+#privacyOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 9100;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+#privacyOverlay.open { display: flex; }
+#privacyBox {
+  background: var(--white);
+  border-radius: 20px;
+  max-width: 620px;
+  width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+}
+#privacyBox .priv-header {
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+#privacyBox .priv-header h2 { font-size: 1.1rem; font-weight: 700; color: var(--charcoal); }
+#privacyBox .priv-close {
+  background: none; border: none; font-size: 1.3rem;
+  color: var(--muted); cursor: pointer; padding: 4px;
+}
+#privacyBox .priv-close:hover { color: var(--charcoal); }
+#privacyBox .priv-body {
+  padding: 24px 28px;
+  overflow-y: auto;
+  font-size: 0.88rem;
+  color: var(--charcoal);
+  line-height: 1.7;
+}
+#privacyBox .priv-body h3 { font-size: 0.95rem; font-weight: 700; margin: 20px 0 6px; color: var(--charcoal); }
+#privacyBox .priv-body h3:first-child { margin-top: 0; }
+#privacyBox .priv-body p { margin-bottom: 8px; color: #555; }
+
 /* ---- POPUP VIP ---- */
 #vipOverlay {
   display: none;
@@ -1896,7 +1942,7 @@ footer {
   </div>
   <div class="foot-divider"></div>
   <div class="foot-bottom">
-    <span>© 2026 Lê Closet. Todos os direitos reservados.</span>
+    <span>© 2026 Lê Closet. Todos os direitos reservados. &nbsp;·&nbsp; <a href="#" onclick="openPrivacy();return false;" style="color:rgba(255,255,255,0.45);text-decoration:underline;font-size:inherit;">Política de Privacidade</a></span>
     <div class="foot-payments">
       <span class="pay-chip">PIX</span>
       <span class="pay-chip">Cartão</span>
@@ -2373,6 +2419,7 @@ function addToCart(pid){
   updateCart();
   showToast(`${p.name} adicionado ao carrinho`);
   openCart();
+  if(window.fbq) fbq('track','AddToCart',{content_ids:[String(pid)],content_name:p.name,content_type:'product',value:p.price,currency:'BRL'});
 }
 function rmItem(key){cart=cart.filter(i=>i.key!==key);updateCart();}
 function chQty(key,d){
@@ -2519,6 +2566,7 @@ function checkoutWpp(){
   const items=cart.map(i=>`• ${i.name} (${i.color} · ${i.size} · x${i.qty}) — ${fmt(i.price*i.qty)}`).join('\n');
   const total=cart.reduce((a,i)=>a+i.price*i.qty,0);
   const msg=`Olá! Gostaria de fazer um pedido na Lê Closet:\n\n${items}\n\nTotal: ${fmt(total)}\n\nPode me ajudar a finalizar?`;
+  if(window.fbq) fbq('track','Purchase',{content_ids:cart.map(i=>String(i.id)),content_type:'product',value:total,currency:'BRL',num_items:cart.length});
   window.open(`https://wa.me/5585988116379?text=${encodeURIComponent(msg)}`,'_blank');
 }
 function showToast(msg){
@@ -2536,6 +2584,7 @@ function openPd(pid){
   const p=PRODS.find(x=>x.id===pid);
   if(!p) return;
   pdPid=pid;
+  if(window.fbq) fbq('track','ViewContent',{content_ids:[String(pid)],content_name:p.name,content_type:'product',value:p.price,currency:'BRL'});
   pdGallery=[p.img,...(p.gallery||[])].filter(Boolean);
   selColor[pid]=selColor[pid]||0;
   selSize[pid]=selSize[pid]||p.sizes[0];
@@ -3248,6 +3297,43 @@ function apfResetForm(){
   <div class="chat-options" id="chatOptions"></div>
 </div>
 
+<!-- MODAL PRIVACIDADE -->
+<div id="privacyOverlay" onclick="if(event.target===this)closePrivacy()">
+  <div id="privacyBox">
+    <div class="priv-header">
+      <h2>Política de Privacidade</h2>
+      <button class="priv-close" onclick="closePrivacy()">&#10005;</button>
+    </div>
+    <div class="priv-body">
+      <h3>1. Quem somos</h3>
+      <p>Lê Closet é uma loja de moda feminina online. Nosso contato: WhatsApp (85) 98811-6379.</p>
+
+      <h3>2. Quais dados coletamos</h3>
+      <p>Coletamos dados que você fornece voluntariamente ao entrar em contato conosco via WhatsApp (nome e número de telefone) ou ao se cadastrar na nossa lista VIP (nome e WhatsApp).</p>
+      <p>Também coletamos dados de navegação automaticamente por meio do Meta Pixel (Facebook/Instagram), incluindo páginas visitadas, produtos visualizados e ações realizadas no site, para fins de publicidade direcionada.</p>
+
+      <h3>3. Como usamos seus dados</h3>
+      <p>· Atender pedidos e tirar dúvidas via WhatsApp.</p>
+      <p>· Enviar ofertas exclusivas para membros da lista VIP.</p>
+      <p>· Mensurar e otimizar nossas campanhas de anúncios no Meta (Facebook e Instagram).</p>
+
+      <h3>4. Compartilhamento de dados</h3>
+      <p>Não vendemos seus dados. As informações de navegação são compartilhadas com a Meta Platforms Inc. via Pixel para exibição de anúncios personalizados, conforme os termos de uso da plataforma.</p>
+
+      <h3>5. Cookies e rastreamento</h3>
+      <p>Utilizamos o Meta Pixel, que instala cookies no seu navegador para rastrear sua atividade neste site e em outros sites. Você pode gerenciar ou desativar cookies nas configurações do seu navegador.</p>
+
+      <h3>6. Seus direitos (LGPD)</h3>
+      <p>Conforme a Lei Geral de Proteção de Dados (Lei nº 13.709/2018), você tem direito a acessar, corrigir ou solicitar a exclusão dos seus dados pessoais. Para exercer esses direitos, entre em contato pelo WhatsApp (85) 98811-6379.</p>
+
+      <h3>7. Alterações nesta política</h3>
+      <p>Podemos atualizar esta política periodicamente. A versão mais recente estará sempre disponível neste site.</p>
+
+      <p style="margin-top:20px;font-size:0.78rem;color:var(--muted)">Última atualização: abril de 2026.</p>
+    </div>
+  </div>
+</div>
+
 <!-- POPUP VIP -->
 <div id="vipOverlay" onclick="vipOverlayClick(event)">
   <div id="vipBox">
@@ -3274,7 +3360,14 @@ function apfResetForm(){
     document.getElementById('vipOverlay').classList.add('open');
   }
 
-  window.closeVip = function() {
+  window.openPrivacy = function() {
+  document.getElementById('privacyOverlay').classList.add('open');
+};
+window.closePrivacy = function() {
+  document.getElementById('privacyOverlay').classList.remove('open');
+};
+
+window.closeVip = function() {
     document.getElementById('vipOverlay').classList.remove('open');
     localStorage.setItem(VIP_KEY, '1');
   };
