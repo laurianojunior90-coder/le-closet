@@ -2136,7 +2136,7 @@ function applyColorFilter() {
 
   if(f) {
     // Mostra seção de resultados, oculta o resto
-    resultsSection.style.display = '';
+    resultsSection.style.display = 'block';
     [...MAIN_IDS, ...CAT_IDS].forEach(id => {
       const el = document.getElementById(id);
       if(el) el.style.display = 'none';
