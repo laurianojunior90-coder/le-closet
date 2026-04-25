@@ -1441,6 +1441,106 @@ footer {
   .pd-gallery-col{padding:24px 20px 16px;}
   .pd-info-col{padding:20px;border-left:none;border-top:1px solid var(--border);}
 }
+
+/* ---- POPUP VIP ---- */
+#vipOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 9000;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+#vipOverlay.open { display: flex; }
+#vipBox {
+  background: var(--white);
+  border-radius: 24px;
+  max-width: 400px;
+  width: 100%;
+  padding: 36px 32px 32px;
+  position: relative;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+  animation: vipSlideUp .35s cubic-bezier(.22,1,.36,1);
+}
+@keyframes vipSlideUp {
+  from { opacity:0; transform: translateY(32px) scale(.97); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
+}
+#vipClose {
+  position: absolute;
+  top: 14px; right: 18px;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--muted);
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+#vipClose:hover { color: var(--charcoal); }
+.vip-badge {
+  display: inline-block;
+  background: var(--rose-light);
+  color: var(--rose-dark);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 99px;
+  margin-bottom: 14px;
+}
+#vipBox h2 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--charcoal);
+  margin-bottom: 8px;
+  line-height: 1.25;
+}
+#vipBox h2 em { color: var(--rose); font-style: normal; }
+#vipBox p {
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin-bottom: 22px;
+  line-height: 1.5;
+}
+.vip-field {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  font-family: var(--font);
+  color: var(--charcoal);
+  margin-bottom: 10px;
+  outline: none;
+  transition: border-color .2s;
+}
+.vip-field:focus { border-color: var(--rose); }
+#vipBtn {
+  width: 100%;
+  background: var(--rose);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background .2s, transform .1s;
+}
+#vipBtn:hover { background: var(--rose-dark); }
+#vipBtn:active { transform: scale(.98); }
+.vip-fine {
+  font-size: 0.72rem;
+  color: var(--muted-light);
+  margin-top: 12px;
+  line-height: 1.4;
+}
 </style>
 </head>
 <body>
@@ -3135,6 +3235,66 @@ function apfResetForm(){
   <div class="chat-messages" id="chatMessages"></div>
   <div class="chat-options" id="chatOptions"></div>
 </div>
+
+<!-- POPUP VIP -->
+<div id="vipOverlay" onclick="vipOverlayClick(event)">
+  <div id="vipBox">
+    <button id="vipClose" onclick="closeVip()">&#10005;</button>
+    <div class="vip-badge">Lista VIP exclusiva</div>
+    <h2>Ganhe <em>10% OFF</em> na sua primeira compra</h2>
+    <p>Entre para nossa lista VIP no WhatsApp e receba desconto exclusivo, lançamentos em primeira mão e ofertas especiais.</p>
+    <input id="vipName" class="vip-field" type="text" placeholder="Seu nome" autocomplete="given-name"/>
+    <input id="vipPhone" class="vip-field" type="tel" placeholder="Seu WhatsApp (com DDD)" autocomplete="tel"/>
+    <button id="vipBtn" onclick="submitVip()">Quero meu desconto de 10% OFF</button>
+    <div class="vip-fine">Sem spam. Só ofertas que valem a pena.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var VIP_KEY = 'lecloset_vip_done';
+  var triggered = false;
+
+  function openVip() {
+    if(triggered) return;
+    if(localStorage.getItem(VIP_KEY)) return;
+    triggered = true;
+    document.getElementById('vipOverlay').classList.add('open');
+  }
+
+  window.closeVip = function() {
+    document.getElementById('vipOverlay').classList.remove('open');
+    localStorage.setItem(VIP_KEY, '1');
+  };
+
+  window.vipOverlayClick = function(e) {
+    if(e.target === document.getElementById('vipOverlay')) closeVip();
+  };
+
+  window.submitVip = function() {
+    var name  = document.getElementById('vipName').value.trim();
+    var phone = document.getElementById('vipPhone').value.trim();
+    if(!name)  { document.getElementById('vipName').focus(); return; }
+    if(!phone) { document.getElementById('vipPhone').focus(); return; }
+    var msg = encodeURIComponent('Olá! Meu nome é ' + name + ' e quero entrar na lista VIP da Lê Closet para receber meu cupom de 10% OFF.');
+    localStorage.setItem(VIP_KEY, '1');
+    document.getElementById('vipOverlay').classList.remove('open');
+    window.open('https://wa.me/5585988116379?text=' + msg, '_blank');
+  };
+
+  // Dispara após 8s
+  setTimeout(openVip, 8000);
+
+  // Ou ao rolar 40% da página
+  window.addEventListener('scroll', function onScroll() {
+    var scrolled = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+    if(scrolled >= 0.4) {
+      window.removeEventListener('scroll', onScroll);
+      openVip();
+    }
+  }, { passive: true });
+})();
+</script>
 
 </body>
 </html>
