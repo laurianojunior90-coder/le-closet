@@ -1,36 +1,41 @@
 const fs = require('fs');
 const path = require('path');
-const vm = require('vm');
-
-let _cache = null;
-
-function getProds() {
-  if (_cache) return _cache;
-  const html = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8');
-  const match = html.match(/const PRODS\s*=\s*(\[[\s\S]*\])\s*;\s*\/\/\s*##PRODS_END##/);
-  if (!match) return [];
-  const ctx = {};
-  vm.createContext(ctx);
-  vm.runInContext('PRODS = ' + match[1], ctx, { timeout: 8000 });
-  _cache = ctx.PRODS;
-  return _cache;
-}
 
 module.exports = function handler(req, res) {
   const { id } = req.query;
   if (!id) return res.status(400).send('id required');
 
-  let prods;
-  try { prods = getProds(); } catch (e) { return res.status(500).send('parse error'); }
+  const idStr = String(id).replace(/[^0-9]/g, '');
+  if (!idStr) return res.status(400).send('invalid id');
 
-  const p = prods.find(x => String(x.id) === String(id));
-  if (!p || !p.img) return res.status(404).send('not found');
+  let html;
+  try {
+    html = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8');
+  } catch (e) {
+    return res.status(500).send('read error');
+  }
 
-  const m = String(p.img).match(/^data:([^;]+);base64,(.+)$/s);
-  if (!m) return res.status(400).send('invalid image');
+  const idMarker = '{id:' + idStr + ',';
+  const idIdx = html.indexOf(idMarker);
+  if (idIdx === -1) return res.status(404).send('not found');
 
-  const buf = Buffer.from(m[2], 'base64');
-  res.setHeader('Content-Type', m[1]);
+  // Find img field after the id
+  const imgKey = "img:'";
+  const imgStart = html.indexOf(imgKey, idIdx);
+  if (imgStart === -1 || imgStart - idIdx > 500) return res.status(404).send('img not found');
+
+  const dataStart = imgStart + imgKey.length; // points to 'data:...'
+  const imgEnd = html.indexOf("',", dataStart);
+  if (imgEnd === -1) return res.status(500).send('img end not found');
+
+  const raw = html.slice(dataStart, imgEnd).replace(/[\r\n\t ]/g, '');
+  const semi = raw.indexOf(';base64,');
+  if (!raw.startsWith('data:') || semi === -1) return res.status(400).send('invalid image');
+
+  const mime = raw.slice(5, semi);
+  const b64 = raw.slice(semi + 8);
+  const buf = Buffer.from(b64, 'base64');
+  res.setHeader('Content-Type', mime);
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.send(buf);
 };
