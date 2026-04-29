@@ -28,6 +28,13 @@ module.exports = async function handler(req, res) {
         })),
         payment_methods: { installments: 3 },
         statement_descriptor: 'Le Closet',
+        back_urls: {
+          success: 'https://lecloset.net.br/?pagamento=aprovado',
+          failure: 'https://lecloset.net.br/?pagamento=falha',
+          pending: 'https://lecloset.net.br/?pagamento=pendente',
+        },
+        auto_return: 'approved',
+        notification_url: 'https://lecloset.net.br/api/webhook',
       },
     });
 
